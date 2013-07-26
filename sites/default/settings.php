@@ -210,7 +210,21 @@
  *   );
  * @endcode
  */
-$databases = array();
+$databases = array (
+  'default' => 
+  array (
+    'default' => 
+    array (
+      'database' => 'p2pvalue',
+      'username' => 'p2pvalue',
+      'password' => 'p2pvalue',
+      'host' => 'localhost',
+      'port' => '',
+      'driver' => 'mysql',
+      'prefix' => '',
+    ),
+  ),
+);
 
 /**
  * Access control for update.php script.
@@ -242,7 +256,7 @@ $update_free_access = FALSE;
  *   $drupal_hash_salt = file_get_contents('/home/example/salt.txt');
  *
  */
-$drupal_hash_salt = '';
+$drupal_hash_salt = '-M810bwkl6TuU8s60noftpJQO33I3b1uRiUcEZ8xjws';
 
 /**
  * Base URL (optional).
