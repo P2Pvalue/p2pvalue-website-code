@@ -1,0 +1,47 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for Arxiv.
+ *
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function arxiv_schema() {
+
+  $schema['arxiv_downNo'] = array(
+    'description' => 'Stores paper download number information.',
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'node ID.',
+     ),
+  'downloadNo' => array(
+  'type' => 'int',
+  'unsigned' => TRUE,
+  'not null' => TRUE,
+  'default' => 0,
+  'description' => 'download number'
+  ),
+    ),
+    'primary key' => array('nid'),
+    'indexes' => array(
+      'dn' => array('downloadNo'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function arxiv_uninstall() {
+ $del = db_delete('variable')
+    ->condition('name', 'arxiv_%', 'LIKE')
+    ->execute();
+}

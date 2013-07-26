@@ -1,0 +1,22 @@
+# EPF
+# yaml pattern file
+
+info:
+  title: URLs aliases create
+  description: setting patterns for auto URLs aliases, setting and delete aliases
+  author: QScience
+  category: Pathauto
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+#enable modules
+#Enable clean URLs
+
+actions:
+
+# add url aliases
+  - create:
+      tag: url_alias
+      source:admin/patterns/quickrun
+      alias:pathauto1

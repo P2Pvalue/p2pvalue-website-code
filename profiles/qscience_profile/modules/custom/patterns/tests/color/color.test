@@ -1,0 +1,57 @@
+<?php
+/**
+ * @file
+ * SimpleTests for the Field component of Patterns.
+ *
+ */
+
+class PatternsColorTestCase extends PatternsTestCase {
+
+  var $color_tests_dir;
+
+  static function getInfo() {
+    return array(
+      'name' => 'Color component',
+      'description' => 'Edit the color setting of themes',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->color_tests_dir = $this->getPatternsTestDir() . 'color/';
+
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+                     'color',
+    );
+
+    parent::setUp($modules);
+  }
+
+
+  public function testColor() {
+
+
+
+    // Make sure that matches the theme in the pattern file
+    $theme = 'bartik';
+    parent::runFile('color.yaml', 'Set theme color', $this->color_tests_dir);
+    $palette = variable_get('color_' . $theme . '_palette');
+
+    $this->assertEqual($palette['bottom'], '#494949', t('Modify Color pattern changed palette bottom correctly.'));
+    $this->assertEqual($palette['link'], '#494949', t('Modify Color pattern changed palette link correctly.'));
+    $this->assertEqual($palette['top'], '#494949', t('Modify Color pattern changed palette top correctly.'));
+    $this->assertEqual($palette['bg'], '#494949', t('Modify Color pattern changed palette bg correctly.'));
+    $this->assertEqual($palette['sidebar'], '#494949', t('Modify Color pattern changed palette sidebar correctly.'));
+    $this->assertEqual($palette['sidebarborders'], '#494949', t('Modify Color pattern changed palette sidebarborders correctly.'));
+    $this->assertEqual($palette['footer'], '#494949', t('Modify Color pattern changed palette footer correctly.'));
+    $this->assertEqual($palette['titleslogan'], '#494949', t('Modify Color pattern changed palette titleslogan correctly.'));
+    $this->assertEqual($palette['text'], '#494949', t('Modify Color pattern changed palette text correctly.'));
+
+
+
+  }
+
+}

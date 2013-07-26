@@ -1,0 +1,20 @@
+name = QScience
+description = provide some basic setting and configuration for a instance.
+dependencies[] = patterns
+dependencies[] = macro
+dependencies[] = date
+dependencies[] = arxiv
+dependencies[] = auto_nodetitle
+dependencies[] = entity
+dependencies[] = entityreference
+dependencies[] = views
+dependencies[] = eva
+dependencies[] = qtr
+dependencies[] = filefield_sources
+
+core = 7.x
+version = "7.x-1.0"
+php = 5.2
+package = QScience
+project = "QScience"
+

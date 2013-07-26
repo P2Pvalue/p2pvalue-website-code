@@ -1,0 +1,91 @@
+.option span {
+  list-style-position:outside;
+  list-style-type:none;
+  margin-bottom:0;
+  margin-left:0;
+  margin-right:0;
+  margin-top:0;
+  padding-bottom:0;
+  padding-left:0;
+  padding-right:0;
+  padding-top:0;
+  background:none;
+  width:47.5%;
+}
+#block-qtr-popular .content .listsVisible{
+	padding-top:0;
+}
+
+.listsVisible  .option {
+	padding: 0px;
+	BACKGROUND: #f3f3f3;
+	WIDTH: 275px;
+	height: 30px;
+}
+
+.listsVisible .option a {
+	float: left;
+	text-decoration: none;
+	padding-left: 5px;
+	background: transparent url(images/left.png) no-repeat 0 0;
+	width:88%;
+}
+
+.listsVisible .option a .Clink {
+	height: 21px;
+	float: left;
+	PADDING-TOP: 5px;
+	PADDING-right: 12px;
+	margin-bottom: 0px;
+	background: transparent url(images/right.png) no-repeat right 0;
+		width:100%;
+}
+
+.listsVisible .option a {
+	float: left;
+	PADDING-bottom: 0px;
+	PADDING-right: 0px;
+}
+
+.listsVisible .option a:hover {
+	color: #FF5A00;
+}
+
+.listsVisible .option .optionlink {
+	position: relative;
+	FLOAT: left;
+	text-align: center;
+	PADDING-left: 3px;
+	PADDING-right: 3px;
+}
+
+.listsVisible .option .optionlinkon {
+	BACKGROUND: #f3f3f3;
+}
+
+.listsVisible .option .optionlinkon a {
+	color: #FF5A00;
+}
+
+.listsVisible .option .optionlinkoff {
+	BACKGROUND: url(images/rightB.png) repeat-x scroll;
+	border-bottom: 1px solid #dbdbdb;
+}
+
+.listsVisible .Visible {
+	FLOAT: left;
+	PADDING-BOTTOM: 0px;
+	WIDTH: 275px;
+	FONT-SIZE: 12px;
+}
+
+.listsVisible  .listsHidden {
+	height: 0;
+	overflow: hidden;
+}
+
+.listsVisible  .Visible .more {
+	FLOAT: right;
+	padding-top: 10px;
+	FONT-SIZE: 12px;
+}

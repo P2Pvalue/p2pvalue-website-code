@@ -1,0 +1,11 @@
+#citation-reference-values input.form-text {
+  width: 90%;
+}
+
+#author-reference-values div.form-type-textfield {
+  float: left;
+}
+
+tr.hidden {
+  display: none;
+}

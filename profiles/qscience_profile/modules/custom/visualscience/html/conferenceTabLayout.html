@@ -1,0 +1,64 @@
+<div style="margin-bottom:100px;">
+	<h3 align="left">Informations</h3>
+	<p>
+		Enter here the important informations about your conference. Set the date and time, and also who will participate.
+	</p>
+	<div class="visualscience-right">
+		{{{recipients}}}
+	</div>
+	<div class="visualscience-left" style="margin-top:50px">
+		<p title="Title of the conference">
+			Title: &nbsp;&nbsp;&nbsp;&nbsp; 
+			<input type="text" id="vs-conf-title-{{thisTabId}}" name="vs-conf-title-{{thisTabId}}" placeholder="Title of the conference" onKeyUp="vsConference.checkConfTitle({{thisTabId}});" />
+			<h5 style="color:red;" id="vs-conf-title-error-{{thisTabId}}"></h5>
+		</p>
+		<p>
+			Date: &nbsp;&nbsp;&nbsp;
+			<input type="text" name="vs-conf-date-{{thisTabId}}" id="vs-conf-date-{{thisTabId}}" placeholder="When will it take place ?" class="datepicker" onchange="vsConference.checkConfDate({{thisTabId}});" />
+			<h5 style="color:red;" id="vs-conf-date-error-{{thisTabId}}"></h5>
+		</p>
+		<p>
+			From: &nbsp;&nbsp;
+			<input type="text" name="vs-conf-start-{{thisTabId}}" id="vs-conf-start-{{thisTabId}}" value="00:00" class="timepicker" />
+		</p>
+		<p>
+			To: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<input type="text" name="vs-conf-end-{{thisTabId}}" id="vs-conf-end-{{thisTabId}}" value="00:00" class="timepicker" />
+		</p>
+	</div>
+</div>
+<div>
+	<h3 align="left">Message</h3>
+	<p>
+		Write here a small message that will be added to the email notifying the other participants of the conference. Note the you can also add a file to your message.
+	</p>
+	<div class="visualscience-right">
+		<div id="visualscience-attachments-div-{{thisTabId}}" style="display:inline-block;width:100%;border:solid black 1px;margin-top:0px;">
+			<div id="visualscience-message-attachments-div-show-{{thisTabId}}" style="height:150px;overflow-y:scroll;"></div>
+			<div id="upload-form-{{thisTabId}}"></div> 
+			<div id="progress-upload-{{thisTabId}}" style="margin:5px;padding:5px;background-color:red;font-size:12px;display:none;" >Progress</div>
+		</div>
+	</div>
+	<div class="visualscience-left">
+		<textarea id="lceEditor{{thisTabId}}" id="vs-conf-message-{{thisTabId}}" rows="15" stle="width:90%;">
+		</textarea>
+	</div>
+</div>
+<br />
+<hr width="80%" align="center" />
+<div align="center">
+	<h3 align="left">Submit</h3>
+	<p align="justify" width="75%">
+		Before submitting the conference, you may want to double-check what you entered, as you will not be able to modify those informations later. Also, please take note of what will happend when you'll hit the <strong>Create my Conference !</strong> button.
+	</p>
+	<div width="75%">
+		<ol width="50%" style="text-align:left;display:inline-block;">
+			<li>A email will be sent to each of the recipients (you included). If you wrote a message, we will add it to the email.</li>
+			<li>In the email there will be a link to the conference's page. It will always be active but only reachable for logged in recipients.</li>
+			<li>If a recipients is not logged in, he will receive a one time password with the email to be able to access the conference.</li>
+			<li>On day D and time T, open the link and enjoy your High-Quality Conference !</li>
+		</ol>
+	</div>
+	<br />
+	<input type="button" value="Create my Conference !" onclick="vsConference.checkAndSendConference({{thisTabId}});return false;" style="font-size:18px;" />
+</div>

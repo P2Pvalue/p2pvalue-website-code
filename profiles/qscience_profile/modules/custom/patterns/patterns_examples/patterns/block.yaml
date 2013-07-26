@@ -1,0 +1,31 @@
+# YAML Block Pattern
+# QScience
+# This pattern has been automatically generated at Patterns->Export
+
+info:
+  title: Blocks (create)
+  description: Inserts a custom block in the sidebar of Bartik in the main page
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+modules:
+  - block
+block:
+  - 
+    create:
+      tag: block
+      module: block
+      body: This is a block created from an automatically exported pattern!.
+      info: Automatic Pattern Block
+      format: filtered_html
+      theme: bartik
+      status: 1
+      weight: 0
+      region: sidebar_first
+      custom: 0
+      visibility: 1
+      pages: '<front>'
+      title: block_title_test_manual_opt_pattern
+      cache: -1

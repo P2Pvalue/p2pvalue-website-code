@@ -1,0 +1,49 @@
+fieldset.extracted_authors .prototype, fieldset.extracted_citations .prototype {
+  display: none;
+}
+
+fieldset.extracted_authors input.author_name, fieldset.extracted_citations input.citation {
+  width: 100%;
+}
+
+fieldset.extracted_authors div.form-type-textfield {
+  width: 40%;
+  display: inline-block;
+}
+
+fieldset.extracted_citations div.form-type-textfield {
+  width: 80%;
+  display: inline-block;
+}
+
+fieldset.extracted_authors span.remove_button, fieldset.extracted_citations span.remove_button {
+  cursor: pointer;
+  padding: 1px 10px;
+  color: #5a5a5a;
+  text-align: center;
+  font-weight: normal;
+  font-family: "Lucida Grande", Verdana, sans-serif;
+  border: 1px solid #e4e4e4;
+  border-bottom: 1px solid #b4b4b4;
+  border-left-color: #d2d2d2;
+  border-right-color: #d2d2d2;
+  -moz-border-radius: 20px;
+  -webkit-border-radius: 20px;
+  border-radius: 5px;
+  display: inline-block;
+  margin-left: 10px;
+  background-color: #fafafa;
+}
+
+fieldset.extracted_authors span.remove_button:hover, fieldset.extracted_citations span.remove_button:hover {
+  background-color: #f0f0f0;
+  border: 1px solid #b4b4b4;
+  border-bottom: 1px solid #e4e4e4;
+  border-left-color: #b4b4b4;
+  border-right-color: #b4b4b4;
+}
+
+fieldset.extracted_authors span.remove_button:active, fieldset.extracted_citations span.remove_button:active {
+  background-color: #8a8a8a;
+  color: #fff;
+}

@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Defines constants used all over the module.
+ */
+
+define('D2D_INSTANCE_URL_MAX_LENGTH', 128);
+define('D2D_INSTANCE_NAME_MAX_LENGTH', 64);
+define('D2D_INSTANCE_DESCRIPTION_MAX_LENGTH', 1024);
+define('D2D_PUBLIC_KEY_MAX_LENGTH', 1024);
+define('D2D_GROUP_NAME_MAX_LENGTH', 128);
+define('D2D_GROUP_DESCRIPTION_MAX_LENGTH', 1024);
+define('D2D_METHOD_NAME_MAX_LENGTH', 128);
+define('D2D_INSTANCE_IDENTIFIER_LENGTH', 32);
+define('D2D_NONCE_LENGTH', 32);
+
+// in seconds
+define('D2D_UTC_OFFSET_DEFAULT', 0);
+define('D2D_UTC_OFFSET_MIN', -86400);
+define('D2D_UTC_OFFSET_MAX', 86400);
+define('D2D_TIMEOUT_DEFAULT', 30);
+define('D2D_TIMEOUT_MIN', 1);
+define('D2D_TIMEOUT_MAX', 60);
+
+define('D2D_DELTA_0_DEFAULT', 600);
+define('D2D_DELTA_0_MIN', 0);
+define('D2D_DELTA_0_MAX', 600);
+define('D2D_DELTA_1_DEFAULT', 600);
+define('D2D_DELTA_1_MIN', 0);
+define('D2D_DELTA_1_MAX', 600);
+
+define('D2D_VERSION_STRING', '0.2.0');
+
+define('D2D_NOTIFICATION_TYPE_MAX_LENGTH', 128);
+
+define('D2D_REQUEST_TYPE_MAX_LENGTH', 128);
+
+define('D2D_REQUEST_VALIDITY', 2 * 24 * 60 * 60); // 2 days
+define('D2D_REQUEST_TIME_UNTIL_RESEND', 30 * 60); // 30 minutes
+define('D2D_REQUEST_MAX_NUMBER_OF_RESENDS', 50);
+
+define('D2D_IP_MAX_LENGTH', 128);
+define('D2D_MINIMUM_PHP', '5.3.0');

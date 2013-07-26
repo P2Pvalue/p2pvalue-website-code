@@ -1,0 +1,20 @@
+# YAML Block Pattern
+# QScience
+
+info:
+  title: Blocks and Roles (delete)
+  description: Makes search block not visible for the role administrator
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+modules:
+  - block
+block_role:
+  - 
+    delete:
+      tag: block_role
+      module: search
+      delta: form
+      role: administrator

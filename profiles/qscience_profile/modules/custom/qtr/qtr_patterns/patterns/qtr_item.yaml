@@ -1,0 +1,20 @@
+# YAML Shortcut Pattern
+# QScience
+
+info:
+  title: change qtr item
+  description: change qtr item
+  author: QScience
+  category: QTR
+  version: 1.0
+  core: 7.x
+  author_email: xrfind@gmail.com
+  author_website: http://qlectives.eu/
+
+actions:
+  - modify:
+      tag: qtr_item
+      contenttype: 
+        - Article 
+        - Basic page
+        - xeik

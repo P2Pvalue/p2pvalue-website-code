@@ -1,0 +1,10 @@
+name = PDF Parser
+description = Enables PDF parsing.
+dependencies[] = qscience
+dependencies[] = field_remove_item
+
+core = 7.x
+version = 7.x-1.x-dev
+package = PDF Parser
+
+files[] = pdfparser.install

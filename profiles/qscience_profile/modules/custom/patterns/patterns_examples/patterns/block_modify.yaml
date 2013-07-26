@@ -1,0 +1,45 @@
+# YAML Block Pattern
+# QScience
+# This pattern has been automatically generated at Patterns->Export
+
+info:
+  title: Blocks (modify)
+  description: Modifies a module-provided and a custom block.
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+modules:
+  - block
+block:
+# Modify common settings of a normal and a custom block for the theme 'seven'
+  - 
+    modify:
+      tag: block
+      module: user
+      delta: online
+      theme: seven
+      status: 0
+      weight: 0
+      region: dashboard_inactive
+      custom: 0
+      visibility: 0
+      pages:
+      title:
+      cache: -1
+  - 
+    modify:
+      tag: block
+      module: block
+      delta: 1
+      theme: seven
+      status: 1
+      weight: 0
+      region: -1
+      custom: 0
+      visibility: 0
+      pages:
+      title: new_title
+      cache: -1

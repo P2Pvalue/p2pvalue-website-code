@@ -1,0 +1,287 @@
+<?php
+
+/**
+ * @file
+ * A module to built a network of Drupal instances.
+ */
+
+require_once 'includes/d2d.constants.inc';
+require_once 'includes/d2d.crypto.inc';
+require_once 'includes/d2d.api.inc';
+require_once 'includes/d2d.misc.inc';
+require_once 'includes/d2d.notifications.inc';
+require_once 'includes/d2d.settings.inc';
+require_once 'includes/d2d.util.inc';
+require_once 'includes/d2d.init.inc';
+require_once 'includes/d2d.list_instances.inc';
+require_once 'includes/d2d.rpc.inc';
+require_once 'includes/d2d.edit_instance.inc';
+require_once 'includes/d2d.manage_groups.inc';
+require_once 'includes/d2d.edit_group.inc';
+require_once 'includes/d2d.srpc.inc';
+require_once 'includes/d2d.secure_rpc.inc';
+require_once 'includes/d2d.system.inc';
+require_once 'includes/d2d.requests.inc';
+require_once 'includes/d2d.friendship.inc';
+
+class D2DRemoteException extends Exception { }
+
+/**
+ * Get information about instance with internal id $id.
+ */
+function d2d_id_load($id) {
+  if (!d2d_check_convert_int($id)) {
+    return FALSE;
+  }
+  $instance = d2d_api_instance_get_by_id($id);
+  return $instance;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function d2d_menu() {
+  $items = array();
+  if (!d2d_api_initialization_is_completed()) {
+    $items['admin/d2d'] = array(
+      'title' => 'D2D',
+      'description' => 'Establish friendship with other Drupal instances.',
+      'page callback' => 'd2d_show_init',
+      'access arguments' => array('administer d2d'),
+    );
+  }
+  else {
+    $items['admin/d2d'] = array(
+      'title' => 'D2D',
+      'description' => 'Establish friendship with other Drupal instances.',
+      'page callback' => 'd2d_list_instances',
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/prefill'] = array(
+      'title' => 'D2D',
+      'description' => 'Establish friendship with other Drupal instances.',
+      'page callback' => 'd2d_add_instance_prefill',
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/instances'] = array(
+      'title' => 'Instances',
+      'page callback' => 'd2d_list_instances',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => 10,
+    );
+    $items['admin/d2d/instances/%/delete'] = array(
+      'Title' => 'Delete instance',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('d2d_instance_delete_submit', 3),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/instances/%d2d_id/details'] = array(
+      'title' => 'Details',
+      'page callback' => 'd2d_edit_instance_details',
+      'page arguments' => array(3),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 1,
+    );
+    $items['admin/d2d/instances/%d2d_id/public_key'] = array(
+      'title' => 'Public Key',
+      'page callback' => 'd2d_edit_instance_public_key',
+      'page arguments' => array(3),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 2,
+    );
+    $items['admin/d2d/instances/%d2d_id/delete_public_key/%'] = array(
+      'Title' => 'Delete public key',
+      'page callback' => 'd2d_delete_public_key',
+      'page arguments' => array(3, 5),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/instances/%d2d_id/select_public_key/%'] = array(
+      'Title' => 'Select public key',
+      'page callback' => 'd2d_select_public_key',
+      'page arguments' => array(3, 5),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/instances/%d2d_id/unselect_public_key/%'] = array(
+      'Title' => 'Unselect public key',
+      'page callback' => 'd2d_unselect_public_key',
+      'page arguments' => array(3, 5),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/instances/%d2d_id/friendship'] = array(
+      'title' => 'Friendship',
+      'page callback' => 'd2d_edit_instance_friendship',
+      'page arguments' => array(3, 5),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 3,
+    );
+    $items['admin/d2d/instances/%d2d_id/groups'] = array(
+      'title' => 'Groups',
+      'page callback' => 'd2d_edit_instance_groups',
+      'page arguments' => array(3),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 4,
+    );
+    $items['admin/d2d/instances/%d2d_id/permissions'] = array(
+      'title' => 'Permissions',
+      'page callback' => 'd2d_edit_instance_permissions',
+      'page arguments' => array(3),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 5,
+    );
+    $items['admin/d2d/instances/%d2d_id/remote_permissions'] = array(
+      'title' => 'Remote Permissions',
+      'page callback' => 'd2d_edit_instance_remote_permissions',
+      'page arguments' => array(3),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 6,
+    );
+    $items['admin/d2d/notifications'] = array(
+      'title' => 'Notifications',
+      'page callback' => 'd2d_show_notifications',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 20,
+    );
+    $items['admin/d2d/notifications/%/delete'] = array(
+      'Title' => 'Delete notification',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('d2d_notification_delete_submit', 3),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/notifications/%/mark_read'] = array(
+      'Title' => 'Delete notification',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('d2d_notification_mark_read_submit', 3),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/notifications/%/mark_unread'] = array(
+      'Title' => 'Delete notification',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('d2d_notification_mark_unread_submit', 3),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/notifications/%/details'] = array(
+      'Title' => 'Delete notification',
+      'page callback' => 'd2d_show_notification_details',
+      'page arguments' => array(3),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/g_and_p'] = array(
+      'title' => 'Groups & Permissions',
+      'page callback' => 'd2d_manage_groups',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 50,
+    );
+    $items['admin/d2d/g_and_p/groups'] = array(
+      'title' => 'Groups',
+      'page callback' => 'd2d_manage_groups',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => 1,
+    );
+    $items['admin/d2d/g_and_p/permissions'] = array(
+      'title' => 'Permissions',
+      'page callback' => 'd2d_manage_permissions',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 2,
+    );
+    $items['admin/d2d/g_and_p/groups/edit'] = array(
+      'title' => 'Edit Group',
+      'page callback' => 'd2d_edit_group',
+      'page arguments' => array(5),
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+    );
+    $items['admin/d2d/system'] = array(
+      'title' => 'System',
+      'page callback' => 'd2d_show_system_tab',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 80,
+    );
+    $items['admin/d2d/system/out_requests/%/delete'] = array(
+      'Title' => 'Delete notification',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('d2d_outgoing_requests_delete_submit', 4),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/system/out_requests/%/send'] = array(
+      'Title' => 'Delete notification',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('d2d_outgoing_requests_send_submit', 4),
+      'access arguments' => array('administer d2d'),
+    );
+    $items['admin/d2d/settings'] = array(
+      'title' => 'Settings',
+      'page callback' => 'd2d_show_settings_general',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 90,
+    );
+    $items['admin/d2d/settings/general'] = array(
+      'title' => 'General',
+      'page callback' => 'd2d_show_settings_general',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => 1,
+    );
+    $items['admin/d2d/settings/keys'] = array(
+      'title' => 'Keys',
+      'page callback' => 'd2d_show_settings_keys',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 2,
+    );
+    $items['admin/d2d/settings/advanced'] = array(
+      'title' => 'Advanced',
+      'page callback' => 'd2d_show_settings_advanced',
+      'access arguments' => array('administer d2d'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 3,
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function d2d_permission() {
+  return array(
+    'administer d2d' => array(
+      'title' => t('administer D2D'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function d2d_theme() {
+  return array(
+    'd2d_list_permissions' => array(
+      'render element' => 'form',
+    ),
+    'd2d_table_instances' => array(
+      'render element' => 'form',
+    ),
+  );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function d2d_cron() {
+  watchdog('D2D', 'cron');
+  d2d_remove_outdated_outgoing_requests();
+  d2d_send_outgoing_requests(NULL, FALSE);
+}

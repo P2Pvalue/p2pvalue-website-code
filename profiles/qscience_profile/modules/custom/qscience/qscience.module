@@ -1,0 +1,619 @@
+<?php
+
+function qscience_menu() {
+  $items = array();
+
+  $items['papers/popular'] = array(
+    'title' => 'Papers',
+    'description' => 'Popular Papers list',
+    'page callback' => 'paper_sort_filter',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['add/paper'] = array(
+    'title' => 'Post Papers',
+    'description' => 'Add papers of different types',
+    'page callback' => 'paper_add',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ *
+ * Menu callback; Generate a listing of promoted papers.
+ */
+function paper_sort_filter() {
+  // $query = drupal_get_query_parameters($_GET, array());
+  if (isset($_GET['order'])) {
+    $sort_type = $_GET['order'];
+  }
+  else {
+    $sort_type = 'qtr';
+  }
+
+  if (isset($_GET['period'])) {
+    $time = $_GET['period'];
+  }
+  else {
+    $time='month';
+  }
+
+  switch ($sort_type) {
+    case 'vote':
+      $stype=1;
+      break;
+    case 'download':
+      $stype=2;
+      break;
+    case 'view':
+      $stype=3;
+      break;
+    case 'qtr':
+      $stype=4;
+      break;
+    default:
+      $stype=4;
+      break;
+  }
+
+  switch ($time) {
+    case 'year':
+      $ctime=365 * 24 * 3600;
+      break;
+    case '6month':
+      $ctime=182 * 24 * 3600;
+      break;
+    case 'month':
+      $ctime=30 * 24 * 3600;
+      break;
+    case 'week':
+      $ctime=7 * 24 * 3600;
+      break;
+    default:
+      $ctime=30 * 24 * 3600;
+      break;
+  }
+
+  if ($stype <= 3) {
+//    $sql='select n.nid, n.sticky, n.created, a.num from {node} as n LEFT join (select nid, count(*) as num from {qtr_actions} ' .
+//      'where action_type='.$stype.' and timestamp >'.(time()-$ctime).' group by nid) as a on ' .
+//      ' n.nid = a.nid where n.promote=1 and n.status=1 and ' .
+//      '(n.type = \'paper\' or n.type = \'paper_from_arxiv\') order by a.num DESC,n.sticky DESC, n.created DESC';
+
+    $select = db_select('node', 'n')->extend('PagerDefault');
+    $select->leftJoin('qtr_actions', 'a', 'a.nid=n.nid and a.action_type=' . $stype . ' and a.timestamp >' . (time()-$ctime));
+    $select->fields('n', array('nid', 'sticky', 'created'))
+            ->addExpression('COUNT(n.nid)', 'node_count');
+    $select->condition('n.promote', 1)
+            ->condition('n.status', 1)
+            ->condition('n.type', array('paper', 'paper_from_arxiv'), 'in')
+            ->groupBy('n.nid')
+            ->orderBy('node_count', 'DESC')
+            ->orderBy('n.sticky', 'DESC')
+            ->orderBy('n.created', 'DESC');
+    $select->limit(variable_get('default_nodes_main', 10))
+            ->addTag('node_access');
+  }
+  else {
+  /* $sql='select n.nid, n.sticky, n.created, q.quality from {node} as n LEFT join {qtr_quality} as q on n.nid = q.nid where n.promote=1 and n.status=1 and ' .
+'(n.type = \'paper\' or n.type = \'paper_from_arxiv\') order by q.quality DESC,n.sticky DESC, n.created DESC';*/
+    $select = db_select('node', 'n')->extend('PagerDefault');
+    $select->leftJoin('qtr_quality', 'q', 'q.nid=n.nid');
+    $select->fields('n', array('nid', 'sticky', 'created'))->fields('q', array('quality'));
+    $select->condition('n.promote', 1)
+            ->condition('n.status', 1)
+            ->condition('n.type', array('paper', 'paper_from_arxiv'), 'in')
+            ->orderBy('q.quality', 'DESC')
+            ->orderBy('n.sticky', 'DESC')
+            ->orderBy('n.created', 'DESC');
+    $select->limit(variable_get('default_nodes_main', 10))
+            ->addTag('node_access');
+  }
+  /* $nids=db_query($sql)->fetchCol();
+   * this is for option selected in top paper <option ';
+   if($stype==3) {
+    $output .= 'selected="selected"';
+   }
+   $output .= ' value="view">views</option>
+   */
+
+  $nids = $select->execute()->fetchCol();
+  $output = '<div class="border_title" id="page-title"><h2 class="base4font man2_pic_h2">Top papers</h2><a class="plus_minus_link" href="' . url('add/paper') . '">Add</a></div>';
+  $output .= '<div class="rank" style="margin:10px;text-align: right;">
+    <form method="get" action="" id="period">
+    <input type="hidden" name="q" value="papers/popular"/>
+    Sort by most <select onchange="javascript:submit();" name="order" id="order" size="1">
+    <option ';
+  if ($stype == 4) {
+    $output .= 'selected="selected"';
+  }
+  $output .= ' value="qtr">Top value</option>
+    <option ';
+  if ($stype == 1) {
+    $output .= 'selected="selected"';
+  }
+  $output .= ' value="vote">Recent votes</option>
+    <option ';
+  if ($stype == 2) {
+    $output .= ' selected="selected"';
+  }
+  $output .= 'value="download">Recent downloads</option>
+    </select> in the last <select';
+  if ($stype == 4) {
+    $output .= ' disabled="disabled"';
+  }
+  $output .= ' onchange="javascript:submit();" name="period" id="period" size="1">
+    <option ';
+  if ($time == 'week') {
+    $output .= 'selected="selected"';
+  }
+  $output .= ' value="week">week</option>
+    <option ';
+  if ($time == 'month') {
+    $output .= 'selected="selected"';
+  }
+  $output .= ' value="month">month</option>
+    <option ';
+  if ($time == '6month') {
+    $output .= 'selected="selected"';
+  }
+  $output .= ' value="6month">6 months</option>
+    <option ';
+  if ($time == 'year') {
+    $output .= 'selected="selected"';
+  }
+  $output .= ' value="year">year</option>
+    </select> </form>
+  </div>';
+
+  $build['title']=array(
+    '#markup' => $output,
+  );
+  if (!empty($nids)) {
+    $nodes = node_load_multiple($nids);
+    $nvm = node_view_multiple($nodes);
+    $render = render($nvm);
+    $build['content'] = array(
+      '#prefix' => '<div class="popular-papers">',
+      '#markup' => $render,
+      '#suffix' => '</div>',
+    );
+
+    // 'rss.xml' is a path, not a file, registered in node_menu().
+    drupal_add_feed('rss.xml', variable_get('site_name', 'Drupal') . ' ' . t('RSS'));
+    $build['content']['pager'] = array(
+      '#theme' => 'pager',
+      '#weight' => 5,
+    );
+    drupal_set_title(t(''));
+  }
+  else {
+
+    $default_message = '<p>' . t('No paper has been created yet.') . '</p>';
+
+    $default_links = array();
+    if (_node_add_access()) {
+      $default_links[] = l(t('Add new content'), 'node/add');
+    }
+    if (!empty($default_links)) {
+      $default_message .= theme('item_list', array('items' => $default_links));
+    }
+
+    $build['default_message'] = array(
+      '#markup' => $default_message,
+      '#prefix' => '<div id="first-time">',
+      '#suffix' => '</div>',
+    );
+  }
+  return $build;
+}
+
+function paper_add() {
+  $output = '<div><b>There are two options you can choose to post a paper:</b></div>';
+  $output .= '<p class="mt15">Option 1: If the paper is posted on arXiv.org, please click <a href="' . url('node/add/paper-from-arxiv') . '">here</a></p>';
+  $output .= '<p class="mt15">Option 2: Sumbit a paper from websites other than arXiv.org or not shown on any website, please click <a href="' . url('node/add/paper') . '">here</a></p>';
+  $build['title'] = array(
+    '#markup' => $output,
+  );
+  return $build;
+}
+
+/**
+ * Implements hook_block_view_MODULE_DELTA_alter().
+ *
+ * Displays the most recent blogs.
+ */
+function qscience_block_view_blog_recent_alter(&$data, $block) {
+  global $user;
+
+  if (user_access('access content')) {
+    $result = db_select('node', 'n')
+            ->fields('n', array('nid', 'title', 'created'))
+            ->condition('type', 'blog')
+            ->condition('status', 1)
+            ->orderBy('created', 'DESC')
+            ->range(0, variable_get('blog_block_count', 5))
+            ->addTag('node_access')
+            ->execute()->fetchCol();
+    $data['subject'] = t('Latest Blogs');
+    if (!empty($result)) {
+      $nodes = node_load_multiple($result);
+      $data['content']['blog_list'] = node_view_multiple($nodes, 'teaser');
+      $data['content']['blog_more'] = array(
+        '#theme' => 'more_link',
+        '#url' => 'blog',
+        '#title' => t('Read the latest blog entries.'),
+      );
+    }
+    else {
+      $data['content']['blog_list'] =t('No blog entries have been created.');
+    }
+  }
+}
+
+/**
+ * Implements node_create_for_REFERENCE_TYPE hook to able to create lazy referencing.
+ */
+function qscience_node_create_for_author_reference($node_title, $language) {
+  global $user;
+
+  $node = new stdClass();
+  $node->title = $node_title;
+  $split = explode(" ", $node->title);
+  // trying to extract first and last name
+  $first_name = isset($split[0]) ? $split[0] : 'unknown';
+  $last_name = isset($split[1]) ? implode(" ", array_splice($split, 1)) : '';
+
+  $node->first_name = array(
+    $language => array(
+      array(
+        'value' => $first_name
+      )
+    )
+  );
+  $node->last_name = array(
+    $language => array(
+      array(
+        'value' => $last_name
+      )
+    )
+  );
+  $node->type = "author";
+  node_object_prepare($node);
+  $node->language = $language;
+  $node->uid = $user->uid;
+  $node->status = 1;
+  $node->promote = 0;
+  $node->comment = 1;
+
+  $node = node_submit($node); // Prepare node for saving
+  node_save($node);
+
+  return $node->nid;
+}
+
+/**
+ * Implements node_create_for_REFERENCE_TYPE hook to able to create lazy referencing.
+ * 
+ * Format of the input string: Title of the paper [Authors: Author Name1, Author Name2]
+ * So we chop off the first part to get the title, and extract the authors part.
+ */
+function qscience_node_create_for_citation_reference($citation_title, $language) {
+  global $user;
+
+  $pos = mb_stripos(drupal_strtolower($citation_title), "[authors:");
+  $authors = array();
+  if ($pos !== FALSE) {
+    $authors = explode(",", drupal_substr($citation_title, $pos + 9, drupal_strlen($citation_title) - $pos - 10));
+    $citation_title = drupal_substr($citation_title, 0, $pos);
+  }
+  $citation_node = FALSE;
+  // checking if node exists or not
+  $citation_nid = _qscience_check_if_node_exists($citation_title, 'paper');
+  if ($citation_nid === FALSE) {
+    $citation_node = new stdClass();
+    $citation_node->title = trim($citation_title);
+    $citation_node->type = "paper";
+    node_object_prepare($citation_node);
+    $citation_node->language = $language;
+    $citation_node->uid = $user->uid;
+    $citation_node->status = 1;
+    $citation_node->promote = 0;
+    $citation_node->comment = 1;
+
+    $citation_node = node_submit($citation_node);
+  }
+  else {
+    $citation_node = node_load($citation_nid);
+  }
+
+  $citation_targets = array();
+  // checking existance of author references array
+  if (!isset($citation_node->author_reference[$language])) {
+    $citation_node->author_reference[$language] = array();
+  }
+  else {
+    // if exists, collecting the already referenced ids
+    foreach ($citation_node->author_reference[$language] as $key => $val) {
+      $citation_targets[] = $val['target_id'];
+    }
+  }
+
+  // looping through the author names
+  foreach ($authors as $author_name) {
+    $author_name = trim($author_name);
+    $author_nid = _qscience_check_if_node_exists($author_name, 'author');
+
+    // if the specific author does not exists, we create it
+    if ($author_nid === FALSE) {
+      $author_node = new stdClass();
+      $author_node->title = $author_name;
+      $split = explode(" ", $author_name);
+      $first_name = isset($split[0]) ? $split[0] : 'unknown';
+      $last_name = isset($split[1]) ? implode(" ", array_splice($split, 1)) : '';
+
+      $author_node->first_name = array(
+        $language => array(
+          array(
+            'value' => $first_name
+          )
+        )
+      );
+      $author_node->last_name = array(
+        $language => array(
+          array(
+            'value' => $last_name
+          )
+        )
+      );
+      $author_node->type = "author";
+      node_object_prepare($author_node); // Sets some defaults. Invokes hook_prepare() and hook_node_prepare().
+      $author_node->language = $language; // Or e.g. 'en' if locale is enabled
+      $author_node->uid = $user->uid;
+      $author_node->status = 1; //(1 or 0): published or not
+      $author_node->promote = 0; //(1 or 0): promoted to front page
+      $author_node->comment = 1; //2 = comments on, 1 = comments off
+
+      $author_node = node_submit($author_node); // Prepare node for saving
+
+      node_save($author_node);
+      $author_nid = $author_node->nid;
+    }
+    // if the actual author is not assigned to the paper, then we assign it
+    if (!in_array($author_nid, $citation_targets)) {
+      $citation_node->author_reference[$language][] = array(
+        'target_id' => $author_nid,
+      );
+    }
+  }
+
+  node_save($citation_node);
+
+  return $citation_node->nid;
+}
+
+/**
+ * Private function to check if a node exists. The function checks the matching of
+ * the title.
+ * 
+ */
+function _qscience_check_if_node_exists($match, $node_type) {
+  $nid = FALSE;
+  $query = db_select('node', 'n')
+    ->condition('n.type', $node_type, '=')
+    ->condition('n.title', $match, '=')
+    ->fields('n', array('nid'))
+    ->execute();
+
+  $row_count = $query->rowCount();
+  if ($row_count > 0) {
+    while ($row = $query->fetchAssoc()) {
+      $nid = (int)$row['nid'];
+      break;
+    }
+  }
+//  dpm($result);
+  return $nid;
+}
+
+/**
+ * Implements hook_file_insert. We hook into the file upload here.
+ */
+function qscience_file_insert($file) {
+  if ($_POST['form_id'] == 'paper_node_form') {
+    qscience_paper_uploaded($file);
+  }
+}
+
+/**
+ * Calling the own hook_paper_uploaded hook. So if some module (like pdfparser)
+ * implements it, then it can react to the paper upload event.
+ * 
+ */
+function qscience_paper_uploaded($file) {
+  foreach (module_implements('paper_uploaded') as $module) {
+    if ($module === 'qscience') continue;
+    module_invoke($module, 'paper_uploaded', $file);
+  }
+}
+
+/**
+ * Implements hook_FORM_NAME_validate.
+ * This function is responsible for validating the saved paper data.
+ * Validation in this case means checking if a similar paper exists or not.
+ * 
+ */
+function qscience_paper_form_validate(&$form, &$form_state) {
+  global $_POST;
+
+  // if editing the paper then return, beacause no need to validate the editing
+  if (is_numeric($form['nid']['#value'])) {
+    return;
+  }
+
+  $lang = $form['language']['#value'];
+  $title = $form_state['values']['title'];
+  $filename = FALSE;
+  $fid = isset($form_state['values']['field_paper_upload'][$lang][0]['fid']) ? $form_state['values']['field_paper_upload'][$lang][0]['fid'] : FALSE;
+  $match_ids = array();
+
+  // checking matching paper titles
+  $query_title = db_select('node', 'n');
+  $result_title = $query_title
+        ->fields('n', array('nid'))
+        ->condition('n.title', $title, '=')
+        ->execute();
+  foreach ($result_title as $row) {
+    $match_ids['title'] = (int)$row->nid;
+  }
+
+  // checking existance of file if is file selected...
+  if ($fid !== FALSE) {
+    $query_tmp = db_select('file_managed', 'fm');
+    $result_tmp = $query_tmp
+          ->fields('fm', array('filename'))
+          ->condition('fid', $fid, '=')
+          ->execute();
+    foreach ($result_tmp as $row) {
+      $filename = $row->filename;
+      break;
+    }
+    // if we found the filename
+    if ($filename !== FALSE) {
+      $query_file = db_select('node', 'n');
+      $query_file->join('file_usage', 'fu', 'fu.id = n.nid');
+      $query_file->join('file_managed', 'fm', 'fm.fid = fu.fid');
+      $result_file = $query_file
+            ->fields('n', array('nid'))
+            ->condition('n.type', 'paper', '=')
+            ->condition('fm.filename', $filename, '=')
+            ->execute();
+      foreach ($result_file as $row) {
+        $match_ids['file name'] = (int)$row->nid;
+      }
+    }
+  }
+
+  // if first submit, and we found a match id somewhere we raise an error, and we add
+  // a "submit anyway" button
+  if (!isset($_POST['submit_anyway']) && count($match_ids) > 0) {
+    foreach ($match_ids as $type => $id) {
+      form_set_error('', t('A paper with the same @type already exists, <a href="@link" target="_blank">please check</a> it before saving new paper anyway.',
+        array(
+          '@type' => $type,
+          '@link' => url('node/' . $id),
+          )
+        )
+      );
+    }
+
+    $form['submit_anyway'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save paper anyway'),
+      '#weight' => -50,
+      '#name' => 'submit_anyway',
+    );
+  }
+}
+
+/**
+ * Implements hook_node_validate.
+ */
+function qscience_node_validate($node, &$form, &$form_state) {
+  if ($node->type === 'paper') {
+    $language = $form_state['values']['language'];
+    $lazyref_fields = _entityreference_get_fields_for_lazyreference($form_state);
+    foreach($lazyref_fields as $field) {
+//      dvm($form_state['values'][$field][$language]);
+      foreach ($form_state['values'][$field][$language] as $number => $target) {
+        if (is_numeric($number) && isset($target['target_id']) && is_array($target['target_id'])) {
+          $title = $target['target_id']['title'];
+          
+          $real_title = _qscience_get_real_title($title);
+          $len = drupal_strlen($real_title);
+          if ($len > 255 && $len <= 1024) {
+            form_set_error($field, t('Value too long for the field. Max length is 255 characters but currently %length% characters long.', array(
+              '%length%' => $len
+            )));
+          }
+        }
+      }
+    }
+    if (isset($form_state['input']['author_reference'])) {
+        $i = 0;
+        foreach ($form_state['input']['author_reference']['extracted'] as $key => $author) {
+          if (is_numeric($key)) {
+            $len = drupal_strlen($author['name']);
+            if ($len > 255) {
+              form_set_error('', t('Value too long for the extracted author field. Maximum length is 255 characters, current length is %len% characters.', array(
+                '%len%' => $len
+              )));
+            }
+          }
+        }
+      }
+      if (isset($form_state['input']['citation_reference'])) {
+        $i = 0;
+        foreach ($form_state['input']['citation_reference']['extracted'] as $key => $citation) {
+          if (is_numeric($key)) {
+            $real_title = _qscience_get_real_title($citation['name']);
+            $len = drupal_strlen($real_title);
+            if ($len > 255) {
+              form_set_error('', t('Value too long for the extracted reference field. Maximum length is 255 characters, current length is %len% characters.', array(
+                '%len%' => $len
+              )));
+            }
+          }
+        }
+      }
+//    if ($form['#id'] == 'paper-node-form') {
+//      if (isset($form_state['input']['author_reference'])) {
+//        $i = 0;
+//        foreach ($form_state['input']['author_reference']['extracted'] as $key => $author) {
+//          if (is_numeric($key)) {
+//            if (drupal_strlen($author['name']) > 1000);
+//            form_set_error('', t('Too long field value in extracted author field. Maximum length is 1000 characters.'));
+//          }
+//        }
+//      }
+//    }
+    // + check if titles arent too long...
+    
+    _qscience_paper_node_form_alter($form);
+  }
+}
+
+function _qscience_get_real_title($title) {
+  $low = drupal_strtolower($title);
+  $author_pos = strpos($low, "[authors:");
+  if ($author_pos !== FALSE) {
+    $title = drupal_substr($title, 0, $author_pos);
+  }
+  return $title;
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter.
+ */
+function qscience_form_paper_node_form_alter(&$form, &$form_state, $form_id) {
+  _qscience_paper_node_form_alter($form);
+}
+
+/**
+ * Called by validate or alter.
+ * It adds the necessary js and css files and additional validate function
+ * to the paper upload form.
+ */
+function _qscience_paper_node_form_alter(&$form) {
+  drupal_add_js(drupal_get_path('module', 'qscience') . '/js/qscience.js', 'file');
+  drupal_add_css(drupal_get_path('module', 'qscience') . '/css/qscience.css', array('group' => CSS_DEFAULT, 'type' => 'file'));
+  $form['#validate'][] = 'qscience_paper_form_validate';
+}
+
+function qscience_views_api() {
+  return array(
+    'api' => '3.0'
+  );
+}

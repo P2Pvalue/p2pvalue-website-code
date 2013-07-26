@@ -1,0 +1,110 @@
+<?php
+
+define('PATTERNS_FORMAT_YAML', 'yaml');
+
+/**
+ * 
+ * Implements hook_patterns_parser().
+ * 
+ * @return array  Parser definition.
+ */
+function patterns_yamlparser_patterns_parser() {
+  $parser = array();
+  $parser['format'] = PATTERNS_FORMAT_YAML;
+  $parser['parser'] = 'patterns_yamlparser';
+  return $parser;
+}
+
+
+/**
+ * Implements hook_libraries_info().
+ */
+function patterns_yamlparser_libraries_info() {
+  $libraries['spyc'] = array(
+      'name' => 'Spyc (A simple YAML loader/dumper class for PHP)',
+      'vendor url' => 'https://code.google.com/p/spyc/',
+      'download url' => 'https://github.com/mustangostang/spyc/',
+      'version arguments' => array(
+          'file' => 'Spyc.php',
+          'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@',
+      ),
+      'files' => array(
+          'php' => array('Spyc.php'),
+      ),
+  );
+  return $libraries;
+}
+
+/**
+ * Loads and parses a YAML pattern from file.
+ *
+ * @param string $path The path to the pattern file.
+ * @param bool $local (optional) TRUE if the pattern
+ * file is local. Defaults to TRUE.
+ *
+ * @return array|bool The pattern structure, or FALSE.
+ */
+function patterns_yamlparser_load($path, $local = TRUE) {
+  if ($local && !file_exists($path)) {
+    return FALSE;
+  }
+  
+  $library = libraries_load('spyc');
+  if (!empty($library['loaded'])) {
+    return Spyc::YAMLLoad($path);
+  }else{
+      watchdog('Patterns', 'Spyc library not found while trying to load the file.', array(), WATCHDOG_ERROR);
+      return FALSE;
+  }
+}
+
+
+/**
+ * Parses a string representing a YAML pattern and return
+ * the array representation.
+ *
+ * @param array $pattern The pattern string to convert array.
+ *
+ */
+function patterns_yamlparser_parse($pattern) {
+  $library = libraries_load('spyc');
+  if (!empty($library['loaded'])) {
+    if (!is_array($pattern)) {
+      $pattern = Spyc::YAMLLoad($pattern);
+    }
+  }else{
+      watchdog('Patterns', 'Spyc library not found while trying to parse.', array(), WATCHDOG_ERROR);
+      return FALSE;
+  }
+  return $pattern;
+}
+
+/**
+ * Converts an array representing a pattern into a YAML string.
+ *
+ * @param array $pattern The pattern to convert into a YAML string
+ * @param mixed $append (optional) A string to which the dump 
+ *   will be appended. Defaults NULL
+ *   
+ * @return mixed $dump A string representation of the pattern.
+ */
+function patterns_yamlparser_dump($pattern = NULL, $append = NULL) {
+  if (is_null($pattern) || !is_array($pattern)) return FALSE;
+  $dump = (empty($append)) ? '' : $append . "\n";
+  $library = libraries_load('spyc');
+  if (!empty($library['loaded'])) {
+    $dump.= Spyc::YAMLDump($pattern);
+    return $dump;
+  }else{
+      watchdog('Patterns', 'Spyc library not found while trying to dump.', array(), WATCHDOG_ERROR);
+      return FALSE;
+  }
+}
+
+function patterns_yamlparser_dump_comment($text = NULL, $append = NULL) {
+	if (is_null($text)) return FALSE;
+	$dump = (empty($append)) ? '' : $append . "\n";
+	$dump.= "# " . $text;		
+  return $dump;
+}
+

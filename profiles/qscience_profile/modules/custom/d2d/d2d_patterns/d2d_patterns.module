@@ -1,0 +1,1079 @@
+<?php
+/**
+ * @file
+ * Hook functions for Patterns integration
+ */
+
+// TODO check public key select && MODIFY without the ID
+
+function d2d_patterns($data = NULL){
+	
+	$tags['d2d_public_key'] = array(
+    PATTERNS_INFO   => t('Create, modify, and delete the value pair public key - instance'),
+    PATTERNS_CREATE => array('d2d_patterns_insert_public_keys'),
+    PATTERNS_MODIFY => array('d2d_patterns_update_public_keys'),
+    PATTERNS_DELETE => array('d2d_patterns_delete_public_keys'),
+    PATTERNS_EXPORT => array(
+                          PATTERNS_EXPORT_ALL => 'd2d_patterns_export_all_public_keys',
+                          'Only selected ones' => 'd2d_patterns_export_all_selected_keys'
+                        ),
+  );
+	
+	$tags['d2d_private_key'] = array(
+    PATTERNS_INFO   => t('Create, modify, and delete the private key for the own instance'),
+    PATTERNS_CREATE => array('d2d_patterns_insert_private_key'),
+    PATTERNS_MODIFY => array('d2d_patterns_insert_private_key'),
+    PATTERNS_DELETE => array('d2d_api_own_private_key_delete'),
+    PATTERNS_EXPORT => array('Private key' => 'd2d_patterns_export_private_key',),
+	);
+	    
+  $tags['d2d_instance'] = array(
+    PATTERNS_INFO   => t('Create, modify, and delete  D2D instances.'),
+    PATTERNS_CREATE => array('d2d_patterns_add_instance'),
+    PATTERNS_MODIFY => array('d2d_patterns_edit_instance'),
+    PATTERNS_DELETE => array('d2d_patterns_delete_instance'),
+    PATTERNS_EXPORT => array(
+                          PATTERNS_EXPORT_ALL => 'd2d_patterns_export_all_instances_with_pkey',
+                          PATTERNS_EXPORT_ALL . ' (without public keys)' => 'd2d_patterns_export_all_instances',
+                          'Friends only' => 'd2d_patterns_export_all_friends_with_pkey',
+                          'Friends only (without public keys)' => 'd2d_patterns_export_all_friends'
+                        ),
+  );
+  
+  $tags['d2d_own_instance'] = array(
+      PATTERNS_INFO   => t('Set, unset an instance as own instance.'),
+      PATTERNS_CREATE => array('d2d_patterns_create_own_instance'),
+      PATTERNS_MODIFY => array('d2d_patterns_modify_own_instance'),
+      PATTERNS_DELETE => array('d2d_api_own_instance_delete'),
+      PATTERNS_EXPORT => array(
+          'Own instance with private and public key' => 'd2d_patterns_export_own_instance_full',
+          'Own instance with public key' => 'd2d_patterns_export_own_instance_with_pkey',
+          'Own instance without keys' => 'd2d_patterns_export_own_instance_simple',
+      ),
+  );
+  
+  $tags['d2d_friendship'] = array(
+    PATTERNS_INFO   => t('Establish or remove a friendship'),
+    PATTERNS_CREATE => array('d2d_patterns_friendship_send'),
+    PATTERNS_DELETE => array('d2d_patterns_friendship_send'),
+    PATTERNS_EXPORT => array(PATTERNS_EXPORT_ALL => 'd2d_patterns_export_all_friendships',),
+  );
+  
+  $tags['d2d_group'] = array(
+    PATTERNS_INFO   => t('Create, modify, and delete D2D groups'),
+    PATTERNS_CREATE => array('d2d_form_add_group'),
+    PATTERNS_MODIFY => array('d2d_patterns_edit_group'),
+    PATTERNS_DELETE => array('d2d_patterns_delete_group'),
+    PATTERNS_EXPORT => array(PATTERNS_EXPORT_ALL => 'd2d_patterns_export_all_groups',),
+  );
+
+  $tags['d2d_permission'] = array(
+		PATTERNS_INFO   => t('Assign and revoke D2D permissions'),
+	  PATTERNS_CREATE => array('d2d_patterns_add_permission'),
+	  PATTERNS_DELETE => array('d2d_patterns_delete_permission'),
+	  PATTERNS_EXPORT => array(PATTERNS_EXPORT_ALL => 'd2d_patterns_export_all_permissions',),
+  );
+  
+  $tags['d2d_settings'] = array(
+      PATTERNS_INFO   => t('Assign and revoke D2D permissions'),
+      PATTERNS_MODIFY => array('d2d_patterns_import_settings'),
+      PATTERNS_EXPORT => array(PATTERNS_EXPORT_ALL => 'd2d_patterns_export_settings',),
+  );
+  
+  return $tags;
+  
+}
+
+/////////////
+// SETTINGS
+//////////////
+
+
+function d2d_patterns_export_settings($args = NULL, &$result = NULL) {
+  $action_type = PATTERNS_MODIFY; // defaults are always there and cannot be deleted
+  $actions = array( array( $action_type => array(
+            'tag' => 'd2d_settings',
+            'utc_offset' => variable_get('d2d_utc_offset'),
+            'timeout' => variable_get('d2d_timeout'),
+            'delta0' => variable_get('d2d_delta_0'),
+            'delta1' => variable_get('d2d_delta_1'),
+            'online' => variable_get('d2d_online'),
+  )));
+  return $actions;
+}
+
+function d2d_patterns_import_settings($form_id, $form_state) {
+  
+  $s = $form_state['values']; // settings
+  
+  if (isset($s['timeout'])) {
+    variable_set('d2d_timeout', $s['timeout']);
+  }
+  if (isset($s['utc_offset'])) {
+    variable_set('d2d_utc_offset', $s['utc_offset']);
+  }
+  if (isset($s['delta_0'])) {
+    variable_set('d2d_delta_0', $s['delta_0']);
+  }
+  if (isset($s['delta_1'])) {
+    variable_set('d2d_delta_1', $s['delta_1']);
+  }
+  if (isset($s['online'])) {
+    variable_set('d2d_online', $s['online']);
+  }
+  
+  return patterns_results();
+}
+
+//////////////
+// PERMISSIONS
+//////////////
+
+function d2d_patterns_export_all_permissions($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+
+  $groups = d2d_api_group_get();
+  $permissions = d2d_api_permission_get();
+  $actions = array();
+  foreach ($permissions as $p) {
+    $action = array($action_type => array(
+        'tag' => 'd2d_permission',
+        'group' => $groups[$p['group_id']]['name'],
+        'method' => $p['method'],
+    ));
+    array_push($actions, $action);
+  }
+  return $actions;
+}
+
+function d2d_patterns_delete_permission($form_id, $form_state) {
+  d2d_api_permission_delete($form_state['values']['group_id']);
+  return patterns_results();
+}
+
+function d2d_patterns_add_permission($form_id, $form_state) {
+  $p = $form_state['values'];
+  d2d_api_permission_add(array( array($p['group_id'], $p['method'])));
+  return patterns_results();
+}
+
+
+//////////
+// GROUPS
+/////////
+
+
+function d2d_patterns_export_all_groups($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+
+  $instances = d2d_api_group_get();
+  $actions = array();
+  foreach ($instances as $i) {
+    $action = array($action_type => array(
+        'tag' => 'd2d_group',
+        'name' => $i['name'],
+        'description' => $i['description'],
+        'default' => $i['auto_member'],
+    ));
+    if ($action_type == PATTERNS_MODIFY) {
+    		$action[$action_type]['id'] = $i['id'];
+    }
+    array_push($actions, $action);
+  }
+  return $actions;
+}
+
+function d2d_patterns_edit_group($form_id, $form_state) {
+  $group = $form_state['values'];
+  d2d_api_group_update($group['id'], $group['name'], $group['description'], $group['default']);
+  return patterns_results();
+}
+
+function d2d_patterns_delete_group($form_id, $form_state) {
+  d2d_api_group_delete($form_state['values']['id']);
+  return patterns_results();
+}
+
+////////////////
+// PRIVATE KEY
+////////////////
+
+function d2d_patterns_export_private_key($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+
+  $key = array($action_type => array(
+      'tag' => 'd2d_private_key',
+      'key' => d2d_api_own_private_key_get(),
+  ));
+
+  return array($key);
+}
+
+function d2d_patterns_insert_private_key($form_id, $form_state) {
+  _d2d_patterns_insert_private_key($form_state['values']['key']);
+  return patterns_results();
+}
+
+////////////////
+// OWN INSTANCE 
+////////////////
+
+function _d2d_patterns_export_own_instance($action_type, $public = FALSE, $private = FALSE) {
+  
+  $own = d2d_api_own_instance_get($private);
+
+  $export = array($action_type => array(
+      'tag' => 'd2d_own_instance',
+      'd2d_id' => $own['d2d_id'],
+      'name' => $own['name'],
+      'url' => $own['url'],
+      'description' => empty($own['description']) ? 'No decr.' : $own['description'],
+  ));
+
+  if (!empty($own['description'])) {
+    $export[$action_type]['description'] = $own['description'];
+  }
+
+  if ($public && !empty($own['public_key'])) {
+    $export[$action_type]['public_key'] = $own['public_key'];
+  }
+
+  if ($private && !empty($own['private_key'])) {
+    $export[$action_type]['private_key'] = $own['private_key'];
+  }
+
+  return array($export);
+}
+
+function d2d_patterns_export_own_instance_full($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+  return _d2d_patterns_export_own_instance($action_type, TRUE, TRUE);
+}
+
+function d2d_patterns_export_own_instance_with_pkey($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+  return _d2d_patterns_export_own_instance($action_type, TRUE);
+}
+
+function d2d_patterns_export_own_instance_simple($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+  return _d2d_patterns_export_own_instance($action_type);
+}
+
+function _d2d_patterns_import_own_instance($action, $form_state) {
+    
+  $import = array(
+      'd2d_id' => $form_state['values']['d2d_id'],
+      'name' => $form_state['values']['name'],
+      'url' => $form_state['values']['url'],
+      'description' => empty($form_state['values']['description']) ? 'No decr.' : $form_state['values']['description'],
+  );
+  
+  if ($action == PATTERNS_CREATE) {
+    $id = d2d_api_instance_add($import);
+  }
+  else {
+    $id = d2d_api_own_instance_id_get();
+    d2d_api_instance_update($id, $import);
+  }
+  
+  d2d_api_own_instance_id_set($id);
+  d2d_api_own_d2d_id_set($import['d2d_id']);
+  
+  // If a public key is found, set and select it
+  if (isset($form_state['values']['public_key'])) {
+    $id_pk = _d2d_patterns_insert_public_key($id, $form_state['values']['public_key']);
+    d2d_api_public_key_select($id, $id_pk);
+  }
+  
+  // If a private key is found, set it
+  if (isset($form_state['values']['private_key'])) {
+    _d2d_patterns_insert_private_key($form_state['values']['private_key']);
+  }
+  
+  return patterns_results();
+}
+
+function d2d_patterns_create_own_instance($form_id, &$form_state) {
+  $res = _d2d_patterns_import_own_instance(PATTERNS_CREATE, $form_state);
+  menu_rebuild(); // clear cache
+  return $res;
+}
+
+function d2d_patterns_modify_own_instance($form_id, &$form_state) {
+  return _d2d_patterns_import_own_instance(PATTERNS_MODIFY, $form_state);
+}
+
+////////////////
+// FRIENDSHIPS
+///////////////
+
+function d2d_patterns_export_all_friendships($args = NULL, &$result = NULL) {
+  $action_type = PATTERNS_CREATE; // either create or delete
+  
+  $instances = d2d_api_friend_get();
+  $actions = array();
+  foreach ($instances as $i) {
+    $action = array($action_type => array(
+        'tag' => 'd2d_friendship',
+        'd2d_id' => $i['d2d_id'],
+    ));
+    array_push($actions, $action);
+  }
+  return $actions;
+}
+
+function d2d_patterns_friendship_send($form_id, &$form_state) {
+  $id = $form_state['values']['instance_id'];
+  $state = $form_state['values']['state'];
+  $old_friendship_state = $form_state['values']['old_friendship_state'];
+  d2d_api_friendship_update($id, $state, $old_friendship_state, d2d_api_own_instance_id_get());
+  d2d_api_friendship_send($id, TRUE, 1, TRUE);
+  return patterns_results();
+}
+
+
+/////////////
+// INSTANCES
+/////////////
+
+function _d2d_patterns_export_instances($args, &$result, $public_key, $friends_only) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+    
+  $instances = $friends_only ? d2d_api_friend_get() : d2d_api_instance_get();
+  $actions = array();
+  foreach ($instances as $i) {
+    $action = array($action_type => array(
+        'tag' => 'd2d_instance',
+        'd2d_id' => $i['d2d_id'],
+        'url' => $i['url'],
+        'name' => $i['name'],
+        'description' => $i['description'],
+    ));
+    
+    if ($public_key) {
+      $action[$action_type]['public_key'] = $i['public_key'];
+    }
+    
+    if ($action_type == PATTERNS_MODIFY) {
+    		$action[$action_type]['id'] = $i['id'];
+    }
+    array_push($actions, $action);
+  }
+  return $actions;
+}
+
+function d2d_patterns_export_all_instances($args = NULL, &$result = NULL) {
+  return _d2d_patterns_export_instances($args, $result, FALSE, FALSE);
+}
+
+function d2d_patterns_export_all_friends($args = NULL, &$result = NULL) {
+  return _d2d_patterns_export_instances($args, $result, FALSE, TRUE);
+}
+
+function d2d_patterns_export_all_instances_with_pkey($args = NULL, &$result = NULL) {
+  return _d2d_patterns_export_instances($args, $result, TRUE, FALSE);
+}
+
+function d2d_patterns_export_all_friends_with_pkey($args = NULL, &$result = NULL) {
+  return _d2d_patterns_export_instances($args, $result, TRUE, TRUE);
+}
+
+function d2d_patterns_add_instance($form_id, &$form_state) {
+  $i= $form_state['values'];
+  $id = d2d_api_instance_add(array(
+    'd2d_id' => $i['d2d_id'],
+    'name' => $i['name'],
+    'url' => $i['url'],
+    'description' => $i['description'],
+    'name' => $i['name'],
+  ));
+  
+  if (isset($i['public_key'])) {
+    $id_pk = _d2d_patterns_insert_public_key($id, $i['public_key']);
+    d2d_api_public_key_select($id, $id_pk);
+  }
+  
+  return patterns_results();
+}
+
+function d2d_patterns_edit_instance($form_id, &$form_state) {
+  $i= $form_state['values'];
+  $update = array();
+  if (isset($i['d2d_id'])) $update['d2d_id'] = $i['d2d_id'];
+  if (isset($i['name'])) $update['name'] = $i['name'];
+  if (isset($i['description'])) $update['description'] = $i['description'];
+  if (isset($i['url'])) $update['url'] = $i['url'];
+  
+  if (empty($i['id'])) { // falsy
+    return patterns_results(PATTERNS_ERR, t('A an error occurred, could not update intance'));
+  }
+  
+  $id = d2d_api_instance_update($i['id'], $update);
+
+  if (isset($i['public_key'])) {
+    $id_pk = _d2d_patterns_insert_public_key($id, $i['public_key']);
+    d2d_api_public_key_select($id, $id_pk);
+  }
+  return patterns_results();  
+}
+
+function d2d_patterns_delete_instance($form_id, &$form_state) {
+  if (empty($form_state['values']['id'])) { // falsy
+    return patterns_results(PATTERNS_ERR, t('A an error occurred, could not delete intance'));
+  }
+  d2d_api_instance_delete($form_state['values']['id']);
+  
+  return patterns_results();
+}
+
+///////////////
+// PUBLIC KEYS
+///////////////
+
+// Somehow Spyc duplicates the | character at the beginning of the string
+// This methods looks for |\n at and removes it. White spaces at every ne line
+// must be eliminated too, but need a new line at the end 
+function _d2d_patterns_fix_imported_key($key) {
+  
+  // normalize newlines
+  $key = preg_replace('/(\r\n|\r|\n)+/', "\n", $key);
+  $key = str_replace(array("|\n"), '', $key);
+  
+  $type = NULL;
+  $pos = strrpos($key, '-----BEGIN PUBLIC KEY-----');
+  if ($pos !== FALSE) {
+    $type = 'PUBLIC';
+  }
+  else {
+    $pos = strrpos($key, '-----BEGIN PRIVATE KEY-----');
+    if ($pos !== FALSE) {
+      $type = 'PRIVATE';
+    }
+  }
+  
+  $key = d2d_strip_comments_from_key($key);
+  // remove whitespace characters
+  $key = preg_replace('/\s+/', '', $key);
+  
+  if (!is_null($type)) {
+    $begin = '-----BEGIN ' . $type . ' KEY-----';
+    $end = '-----END ' . $type . ' KEY-----';
+    $key = $begin . "\n" . chunk_split($key, 64) . $end . "\n";
+  }
+  else {
+    $key = chunk_split($key, 64) . "\n";
+  }
+  
+  return trim($key); 
+}
+
+function _d2d_patterns_insert_public_key($instance_id, $key) {
+  return d2d_api_public_key_set($instance_id, _d2d_patterns_fix_imported_key($key));
+}
+
+function _d2d_patterns_insert_private_key($key) {
+  d2d_api_own_private_key_set(_d2d_patterns_fix_imported_key($key));
+}
+
+function _d2d_patterns_export_public_keys($action_type, $selected_only = FALSE) {
+  $actions = array();
+  
+  $keys = $selected_only ? d2d_api_public_key_get_selected :  d2d_api_public_key_get();
+  foreach ($keys as $k) {
+    $k = get_object_vars($k);
+    $action = array($action_type => array(
+      'tag' => 'd2d_public_key',
+      'd2d_id' => $k['d2d_id'],
+      'public_key' => $k['public_key'],
+    ));
+    if ($selected_only) {
+      $action[$action_type]['selected'] = TRUE;
+      }
+    if ($action_type == PATTERNS_MODIFY) {
+      $action[$action_type]['id'] = $k['id'];
+    }
+    array_push($actions, $action);
+  }
+  return $actions;
+}
+
+function d2d_patterns_export_all_public_keys($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+	return _d2d_patterns_export_public_keys($action_type);
+}
+
+function d2d_patterns_export_all_selected_keys($args = NULL, &$result = NULL) {
+  $action_type = isset($args['type']) ? $args['type'] : PATTERNS_CREATE;
+	return _d2d_patterns_export_public_keys($action_type, TRUE);
+}
+
+
+function d2d_patterns_insert_public_keys($form_id, $form_state) {
+	$instance_id = $form_state['values']['instance_id'];
+	$public_key = $form_state['values']['public_key'];
+	$id_pk = _d2d_patterns_insert_public_key($instance_id, $public_key);
+	if (isset($form_state['values']['selected'])) {
+	  $ok = d2d_api_public_key_select($instance_id, $id_pk);
+	  if (!$ok) {
+	    return patterns_results(PATTERNS_WARN, t('Could not select public key.'));
+	  }
+	}
+	return patterns_results();
+}
+
+function d2d_patterns_update_public_keys($form_id, $form_state) {
+	$update = array();
+	$pk_id = $form_state['values']['id'];
+	// instance_id set in prepare
+	$instance_id = $form_state['values']['instance_id'];
+	
+	
+  if (isset($form_state['values']['d2d_id'])) {
+    $update['instance_id'] = $instance_id;
+  }
+	
+	if (isset($form_state['values']['public_key'])) {
+		$update['public_key'] = _d2d_patterns_fix_imported_key($form_state['values']['public_key']);
+	} 
+	
+	d2d_api_public_key_update($pk_id, $update);
+	
+	if (isset($form_state['values']['selected'])) {
+	      
+    if (empty($instance_id)) { // falsy
+      return patterns_result(PATTERNS_ERR, t('Could not select/unselect public key.'));
+    }
+    
+	  if (empty($form_state['values']['selected'])) {
+	    d2d_api_public_key_unselect($instance_id);
+	  }
+  	else {
+  	  d2d_api_public_key_select($instance_id, $id_pk);
+  	}
+	}
+	return patterns_results();
+}
+
+function d2d_patterns_delete_public_keys($form_id, $form_state) {
+	if (!isset($form_state['values']['id'])) {
+		$id = d2d_api_public_key_return_id($form_state['values']['d2d_id'], $form_state['values']['public_key']);
+	}
+	else {
+		$id = $form_state['values']['id'];
+	}
+	d2d_api_public_key_delete($id);
+	return patterns_results();
+}
+
+
+///////////////////
+// PATTERNS HOOKS
+///////////////////
+
+function d2d_patterns_prepare($action, $tag, &$data) {
+  $result = array();
+  $status = PATTERNS_SUCCESS;
+  $msg = '';
+  
+  if ($tag == 'd2d_public_key') {
+    if (!isset($data['instance_id'])) {
+      // If isset d2d_id we need to get the id of the new instance
+      if (isset($data['d2d_id'])) {
+        $instance = d2d_api_instance_get($data['d2d_id']);
+  
+        if ($instance != FALSE) {
+          $data['instance_id'] = $instance['id'];
+          $data['my_key'] = $instance['is_me'];
+          
+        }
+      }
+    }
+  }
+  
+  else if ($tag == 'd2d_instance') {
+    if ($action != PATTERNS_CREATE && !isset($data['id']) && isset($data['d2d_id'])) {
+      $instance = d2d_api_instance_get($data['d2d_id']);
+      $data['id'] = $instance == FALSE ? -1 : $instance['id'];
+    }
+  }
+  
+  else if ($tag == 'd2d_group') {
+    if ($action != PATTERNS_CREATE && !isset($data['id']) && isset($data['name'])) {
+      $group = d2d_api_group_get_by_name($data['name']);
+      $data['id'] = is_null($group) ? -1 : $group['id'];
+    }
+  }
+  
+  else if ($tag == 'd2d_permission') {
+    if (!isset($data['group_id']) && isset($data['group'])) {
+      $group = d2d_api_group_get_by_name($data['group']);
+      $data['group_id'] = is_null($group) ? -1 : $group['id'];
+    }
+  }
+  
+  
+  
+  else if ($tag == 'd2d_friendship') {
+    if (!isset($data['instance_id']) && isset($data['d2d_id'])) {
+      $instance = d2d_api_instance_get($data['d2d_id']);
+      if ($instance != FALSE) {
+        $data['instance_id'] = $instance['id'];
+        $data['old_friendship_state'] = $instance['friendship_state'];
+        $data['is_friend'] = $instance['is_friend'];
+        
+        
+        if ($action == PATTERNS_CREATE) {
+          $data['state'] = 1;
+        }
+        else if ($action == PATTERNS_DELETE) {
+          $data['state'] = 0;
+        }
+        
+      }
+      else {
+        $data['instance_id'] = FALSE;
+      }
+    }
+  }
+  
+  return patterns_results($status, $msg, $result);
+}
+
+// Validate the values for an action before running the pattern
+function d2d_patterns_validate($action, $tag, &$data) {
+ 	$result = array();
+  $status = PATTERNS_SUCCESS;
+  $msg = '';
+  
+  // SYNTACTIC VALIDATION
+  
+  if ($tag == 'd2d_public_key') {
+  	
+  	if ($action == PATTERNS_CREATE) {
+  	  $kcheck = array();
+   	  $kcheck[] = array('mandatory' => array('public_key', 'd2d_id'));
+	    $status = patterns_utils_check_keys($data, $kcheck, $msg);
+  	}
+  	
+  	else if ($action == PATTERNS_MODIFY) {
+  	  
+  	  $kcheck = array();
+  	  $kcheck[] = array('mandatory' => array('id'));  
+  	  $kcheck[] = array('at_least_one' => array('public_key', 'd2d_id'), );
+  	  $status = patterns_utils_check_keys($data, $kcheck, $msg);
+  	}
+    
+  	else { // PATTERNS_DELETE
+  		$kcheck = patterns_utils_key_exists(array('public_key', 'd2d_id', 'id'), $data);
+  		
+  		// Either the id or the combination d2d_id public_key
+  		if (!$kcheck['id'] && !($kcheck['public_key'] && $kcheck['d2d_id'])) {
+
+  			$msg = t("Either the 'id' attribute or the combination 'public_key' and 'd2d_id' is required");
+  			$status = PATTERNS_ERR;
+  		}
+  		
+  	}
+  }
+  
+  if ($tag == 'd2d_private_key') {
+     
+    if ($action != PATTERNS_DELETE) {
+      $kcheck = array();
+      $kcheck[] = array('mandatory' => array('key'));
+      $status = patterns_utils_check_keys($data, $kcheck, $msg);
+    }
+  }
+  
+  else if ($tag == 'd2d_instance') {
+  	if ($action == PATTERNS_CREATE) {
+  	  
+  	  $kcheck = array();
+  	  $kcheck[] = array('mandatory' => array('d2d_id', 'url'), );
+  	  $status = patterns_utils_check_keys($data, $kcheck, $msg);
+  	  
+  	}
+  	else if ($action == PATTERNS_MODIFY) {  
+  		$kcheck = array();
+  	  $kcheck[] = array('at_least_one' => array('id', 'd2d_id'), );
+  	  $kcheck[] = array('at_least_one' => array('name', 'description', 'url'), );
+  	  $status = patterns_utils_check_keys($data, $kcheck, $msg);
+  	}
+  	
+  	else { // PATTERNS_DELETE
+  		$kcheck = array();
+  	  $kcheck[] = array('at_least_one' => array('id', 'd2d_id'), );
+  	  $status = patterns_utils_check_keys($data, $kcheck, $msg);
+  	}
+  }
+  
+  else if ($tag == 'd2d_own_instance') {
+    if ($action == PATTERNS_CREATE) {
+      	
+      $kcheck = array();
+      $kcheck[] = array('mandatory' => array('d2d_id', 'url'), );
+      $status = patterns_utils_check_keys($data, $kcheck, $msg);
+      	
+    }
+    else if ($action == PATTERNS_MODIFY) {
+    		$kcheck = array();
+    		$kcheck[] = array('at_least_one' => array('name', 'description', 'url', 'public_key', 'private_key'), );
+    		$status = patterns_utils_check_keys($data, $kcheck, $msg);
+    }
+     
+    // PATTERNS_DELETE requires no option
+  }
+  
+  else if ($tag == 'd2d_group') {
+    if ($action == PATTERNS_CREATE) {
+      	
+      $kcheck = array();
+      $kcheck[] = array('mandatory' => array('name', 'description'), );
+      $status = patterns_utils_check_keys($data, $kcheck, $msg);
+      	
+    }
+    else if ($action == PATTERNS_MODIFY) {
+      
+  		$kcheck = array();
+  		$kcheck[] = array('at_least_one' => array('id', 'name'), );
+  		$kcheck[] = array('at_least_one' => array('name', 'description', 'default'), );
+  		$status = patterns_utils_check_keys($data, $kcheck, $msg);
+    }
+     
+    else { // PATTERNS_DELETE
+      $kcheck = array();
+      $kcheck[] = array('mandatory' => array('id'), );
+      $status = patterns_utils_check_keys($data, $kcheck, $msg);
+    }
+  }
+  
+  else if ($tag == 'd2d_permission') {
+      	
+    if ($action == PATTERNS_MODIFY) {
+      $status = PATTERNS_ERR;
+      $msg = t('Action "modify" is invalid for tag d2d_permission');
+    }
+    else {
+      $kcheck = array();
+      $kcheck[] = array('mandatory' => array('method', 'group'), );
+      $status = patterns_utils_check_keys($data, $kcheck, $msg);
+    }
+  }
+  
+  else if ($tag == 'd2d_friendship') {
+
+    if ($action == PATTERNS_MODIFY) {
+      $status = PATTERNS_ERR;
+      $msg = t('Action "modify" is invalid for tag d2d_friendship');
+    }
+    else {
+      $kcheck = array();
+      $kcheck[] = array('mandatory' => array('d2d_id'), );
+      $status = patterns_utils_check_keys($data, $kcheck, $msg);
+    }
+  }
+  
+  if ($status == PATTERNS_ERR) {
+  	return patterns_results($status, $msg);	
+  }
+  
+  // SEMANTIC VALIDATION
+  
+  if ($tag == 'd2d_public_key') {
+  	$d2d_id = @$data['d2d_id'];
+  	$public_key = @$data['public_key'];
+  	$public_key_short =  '...' . @d2d_substr_public_key($public_key);
+  	
+  	if ($action != PATTERNS_DELETE ) {
+  	
+    	if ($action == PATTERNS_CREATE) {
+    	
+    	  $instance = d2d_api_instance_get($d2d_id);
+    	
+    	  if ($instance === FALSE) {
+    	    $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+    	        t('No instance associated with key %k found.', array('%k' => $data['d2d_id'],)));
+    	  }
+    	  else if (d2d_api_public_key_exist($d2d_id, $public_key)) {
+    	    $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT =>
+    	        t('Instance %i has already public key %k.', array('%i' => $d2d_id, '%k' => $public_key_short,)));
+    	  }
+    	}
+    	 
+    	else if ($action == PATTERNS_MODIFY) {
+    	  $id = $data['id'];
+    	  // modify by id
+    	  $key = d2d_api_public_key_get_by_id($id);
+    	   
+    	  if (empty($key)) {
+    	    $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+    	        t('No public key to modify with \'id\' :id', array(':id' => $id,)));
+    	  }
+    	
+    	
+    	  if (isset($data['selected']) && !isset($data['instance_id'])) {
+    	    $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => t('Instance not found, key cannot be selected'));
+    	  }
+    	}
+    	
+    	if (isset($data['my_key']) && $data['my_key'] == TRUE) {
+    	  $public_key = $data['public_key'];
+    	  $private_key = d2d_api_own_private_key_get();
+    	   
+    	  if (!d2d_check_key_pair(_d2d_patterns_fix_imported_key($public_key), $private_key)) {
+    	    $result[] = array(PATTERNS_WARNING_GENERIC_VALIDATION_ERROR => t('Public / private key pair for own instance is invalid.'));
+    	  }
+    	   
+    	}
+  	  
+  	}
+  	else { // PATTERS_DELETE
+  		// delete by id	
+  		if (isset($data['id'])) {
+  			$id = $data['id'];
+  			$key = d2d_api_public_key_get_by_id($id);
+  			
+  			if (empty($key)) {
+  				$result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => 
+        		t('No public key to modify with \'id\' :id', array(':id' => $id,)));
+  			}	
+  		}
+  		// pub_key and d2d_id are set
+  		else if (!d2d_api_public_key_exist($d2d_id, $public_key)) { 
+  			$result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => 
+        		t('The pair instance-public key (%i-%k) was not found.', array('%i' => $d2d_id, '%k' => $public_key_short,)));
+  		}	
+  	}
+  }
+  
+  else if ($tag == 'd2d_private_key') {
+  
+    $private_key_exist = d2d_api_own_private_key_get() != FALSE;
+  
+    if ($action != PATTERNS_DELETE ) {
+      if ($action == PATTERNS_CREATE) {
+        if ($private_key_exist) {
+          $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT => t('Own private key already set'));
+        }
+      }
+       
+      else { // modify / delete
+        if (!$private_key_exist) {
+          $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => t('Own private key not found'));
+        }
+      }
+      
+      $private_key = $data['key'];
+      $public_key = d2d_api_own_public_key_get();
+       
+      if (!d2d_check_key_pair($public_key, _d2d_patterns_fix_imported_key($private_key))) {
+        $result[] = array(PATTERNS_WARNING_GENERIC_VALIDATION_ERROR => t('Public / private key pair for own instance is invalid.'));
+      }
+    }
+    
+  }
+  
+  else if ($tag == 'd2d_instance') {
+  
+    if ($action == PATTERNS_CREATE) {
+      $instance = d2d_api_instance_get($data['d2d_id']);
+      if ($instance != FALSE) {
+        $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT =>
+            t('Instance with d2d_id "%d2d_id" already existing.', array('%d2d_id' => $data['d2d_id'],)));
+      }
+    }
+    else { // modify, delete
+  
+      $instance = d2d_api_instance_get_by_id($data['id']);
+  
+      if ($instance == FALSE) {
+        $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+            t('Instance with id "%id" not found.', array('%id' => $data['id'],)));
+      }
+    }
+  }
+  
+  else if ($tag == 'd2d_own_instance') {
+  
+    if ($action == PATTERNS_CREATE) {
+      $instance = d2d_api_instance_get($data['d2d_id']);
+      if ($instance != FALSE) {
+        $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT =>
+            t('Instance with d2d_id "%d2d_id" already existing.', array('%d2d_id' => $data['d2d_id'],)));
+      }
+    }
+    
+    if ($action != PATTERNS_DELETE) { // create, modify
+      if (isset($data['public_key']) || isset($data['public_key'])) {
+        $public_key = isset($data['public_key']) ? $data['public_key'] : d2d_api_own_public_key_get();
+        $private_key = isset($data['private_key']) ? $data['private_key'] : d2d_api_own_private_key_get();
+        
+        if (!d2d_check_key_pair(_d2d_patterns_fix_imported_key($public_key), _d2d_patterns_fix_imported_key($private_key))) {
+          $result[] = array(PATTERNS_WARNING_GENERIC_VALIDATION_ERROR => t('Public / private key pair is invalid.'));
+        }
+      }
+    }
+    
+    if ($action != PATTERNS_CREATE) { // modify, delete
+      $instance = d2d_api_own_instance_get();
+      
+      if ($instance == FALSE) {
+        $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => t('Own instance could not be found')); 
+      }
+      
+      if ($action == PATTERNS_MODIFY) {
+        if (isset($data['public_key']) && !d2d_api_own_public_key_get()) {
+          $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => t('Own public key not found'));
+        }  
+      }
+    }
+  }
+  
+  else if ($tag == 'd2d_group') {
+    
+    if ($action == PATTERNS_CREATE) {
+      $group = d2d_api_group_get_by_name($data['name']);
+      if (!is_null($group)) {
+        $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT =>
+            t('Group "%g" already existing.', array('%g' => $data['name'],)));
+      }
+    }
+    else { // modify, delete
+  
+      $group = d2d_api_group_get($data['id']);
+    
+      if (is_null($group)) {
+        $id = isset($data['name']) ? $data['name'] : $data['id'];
+        $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED => t('Group "%id" not found.', array('%id' => $id,)));
+      }
+    }
+  }
+  
+  else if ($tag == 'd2d_permission') {
+    $method_name = $data['method'];
+    $group_name = $data['group'];
+    
+    if (isset($data['group_id'])) { // set in hook_prepare
+      $group_id = $data['group_id'];
+    }
+    else {
+      $group = d2d_api_group_get_by_name($group_name);
+      $group_id = is_null($group) ? NULL : $group['id'];  
+    }
+    
+    
+    if (is_null($group_id)) {
+      $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+          t('No group with name %name found.', array('%name' => $group_name,)));
+    }
+    else {
+      
+      $permissions = d2d_api_permission_get(TRUE);
+      $perm_exist = isset($permissions[$group_id][$method_name]);
+       
+      if ($action == PATTERNS_CREATE) {
+    
+      		if ($perm_exist) {
+      		  $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT =>
+      		      t('Group "%name" has already the permission "%p".', array('%name' => $group_name, '%p' => $method_name,)));
+      		}
+      }
+       
+      else { // DELETE
+        if (!$perm_exist) {
+          $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+              t('Group "%name" has no permission "%p".', array('%name' => $group_name, '%p' => $method_name,)));
+        }
+        
+      } 
+    }
+  }
+  
+  else if ($tag == 'd2d_friendship') {
+    $d2d_id = @$data['d2d_id'];
+    $instance_id = FALSE; // init value
+      
+    if ($data['instance_id'] == FALSE) { // set in hook_prepare
+      $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+          t('No instance with name %id found.', array('%id' => $d2d_id,)));
+    }
+    else {  
+      
+      if ($action == PATTERNS_CREATE) {
+  
+        if ($data['is_friend']) {
+          $result[] = array(PATTERNS_WARNING_ALREADY_DEFINED_ELEMENT =>
+              t('Instance "%d2d_id" is already marked as friend.', array('%d2d_id' => $d2d_id,)));
+        }
+      }
+       
+      else { // DELETE
+        if (!$data['is_friend']) {
+          $result[] = array(PATTERNS_WARNING_ELEMENT_UNDEFINED =>
+              t('Instance "%d2d_id" is not marked as friend.', array('%d2d_id' => $d2d_id,)));
+        }
+  
+      }
+    }
+  }
+  
+  else if ($tag == 'd2d_settings') {
+  
+    if ($action != PATTERNS_MODIFY) {
+      $status = PATTERNS_ERR;
+      $msg = t('Action %action is invalid for tag d2d_settings', array('%action' => $action));
+    }
+    else {
+    
+      if (isset($data['utc_offset'])) {
+        if (!d2d_check_convert_int($data['utc_offset'])) {
+          $result[] = array(PATTERNS_WARNING_TYPE_ERROR => t('Offset must be an integer.'));
+        }
+        elseif ($data['utc_offset'] < D2D_UTC_OFFSET_MIN || $data['utc_offset'] > D2D_UTC_OFFSET_MAX) {
+          $result[] = array(PATTERNS_WARNING_OUT_OF_RANGE_ELEMENT => 
+                t('Offset must be between @min and @max.', array('@min' => D2D_UTC_OFFSET_MIN, '@max' => D2D_UTC_OFFSET_MAX)));
+        }  
+      }
+      if (isset($data['timeout'])) {
+        if (!d2d_check_convert_int($data['timeout'])) {
+          $result[] = array(PATTERNS_WARNING_TYPE_ERROR => t('Time until timeout must be an integer.'));
+        }
+        elseif ($data['timeout'] < D2D_TIMEOUT_MIN || $data['timeout'] > D2D_TIMEOUT_MAX) {
+          $result[] = array(PATTERNS_WARNING_OUT_OF_RANGE_ELEMENT => 
+               t('Time until timeout must be between @min and @max.', array('@min' => D2D_TIMEOUT_MIN, '@max' => D2D_TIMEOUT_MAX)));
+        }
+      }
+      
+      if (isset($data['delta0'])) {
+        if (!d2d_check_convert_int($data['delta0'])) {
+          $result[] = array(PATTERNS_WARNING_TYPE_ERROR => t('Incoming requests lower bound must be an integer.'));
+        }
+        elseif ($data['delta0'] < D2D_DELTA_0_MIN|| $data['delta0'] > D2D_DELTA_0_MAX) {
+          $result[] = array(PATTERNS_WARNING_OUT_OF_RANGE_ELEMENT =>
+              t('Incoming requests lower bound must be between @min and @max.', array('@min' => D2D_DELTA_0_MIN, '@max' => D2D_DELTA_0_MAX)));
+        }
+      }
+     
+      if (isset($data['delta1'])) {
+        if (!d2d_check_convert_int($data['delta1'])) {
+          $result[] = array(PATTERNS_WARNING_TYPE_ERROR => t('Incoming requests upper bound must be an integer.'));
+        }
+        elseif ($data['delta1'] < D2D_DELTA_1_MIN|| $data['delta1'] > D2D_DELTA_1_MAX) {
+          $result[] = array(PATTERNS_WARNING_OUT_OF_RANGE_ELEMENT =>
+              t('Incoming requests upper bound must be between @min and @max.', array('@min' => D2D_DELTA_1_MIN, '@max' => D2D_DELTA_1_MAX)));
+         }
+      }
+      
+      if (isset($data['online'])) {
+        if (!is_bool($data['online'])) {
+          $result[] = array(PATTERNS_WARNING_TYPE_ERROR => t('Online must be boolean.'));
+        }
+      }
+    }
+    
+  }
+  	
+  return patterns_results($status, $msg, $result);	
+   
+}

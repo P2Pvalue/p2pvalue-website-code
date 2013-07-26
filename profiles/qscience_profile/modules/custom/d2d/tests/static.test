@@ -1,0 +1,175 @@
+<?php
+
+/**
+ * @file
+ * A few static test cases.
+ */
+
+class D2DStaticTestCase extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Static tests',
+      'description' => 'Test functionality of D2D functions',
+      'group' => 'D2D',
+    );
+  }
+  private function generateEvilString($length) {
+    $str = '';
+    for ($i = 0; $i < $length; $i++) {
+      switch (mt_rand(0, 3)) {
+        case 0:
+          $str .= '\\';
+          break;
+        case 1:
+          $str .= ',';
+          break;
+        case 2:
+          $str .= '=';
+          break;
+        default:
+          $str .= chr(mt_rand(32, 126));
+      }
+    }
+    return $str;
+  }
+/**
+ * Some static tests for the functions defined in includes/d2d.util.inc
+ */
+  public function testUtil() {
+    // d2d_replace
+    $this->assertIdentical(
+      d2d_replace('aba', 'ba', 'abababaaababa'),
+      str_replace('aba', 'ba', 'abababaaababa')
+    );
+    $this->assertIdentical(
+      d2d_replace('121', '21', 1212122121),
+      str_replace('121', '21', '1212122121')
+    );
+    $this->assertFalse(d2d_replace('foo', 'bar', 1.0));
+    $this->assertFalse(d2d_replace('foo', 'bar', FALSE));
+
+    // d2d_implode, d2d_explode
+    for ($i = 0; $i < 1024; $i++) {
+      $length = mt_rand(1, 16);
+      $array = array();
+      for ($j = 0; $j < $length; $j++) {
+        $key = $this->generateEvilString(mt_rand(1, 16));
+        $value = $this->generateEvilString(mt_rand(1, 16));
+        $array[$key] = $value;
+      }
+      $imploded = d2d_implode($array);
+      $exploded = d2d_explode($imploded);
+      $this->assertIdentical($array, $exploded);
+    }
+    // d2d_check_array
+    $checks = array('data' => 'is_string', 'value' => 'd2d_check_convert_int', 'string' => 'is_string');
+    $array = array(
+      array(
+        'array' => array('data' => 'xyz', 'value' => '42', 'string' => 'string'),
+        'expected' => array('data' => 'xyz', 'value' => 42, 'string' => 'string'),
+        'res' => TRUE,
+      ),
+      array(
+        'array' => array('value' => '42', 'string' => 'string', 'data' => 'xyz'),
+        'expected' => NULL,
+        'res' => FALSE,
+      ),
+      array(
+        'array' => array('data' => 'xyz', 'value' => '42', 'string' => 'string', 'foo' => 'bar'),
+        'expected' => NULL,
+        'res' => FALSE,
+      ),
+      array(
+        'array' => array('data' => 'xyz', 'value' => '42'),
+        'expected' => NULL,
+        'res' => FALSE,
+      ),
+      array(
+        'array' => array('data' => 42, 'value' => '42', 'string' => 'string'),
+        'expected' => NULL,
+        'res' => FALSE,
+      ),
+      array(
+        'array' => array('data' => '', 'value' => '-0.0', 'string' => ''),
+        'expected' => array('data' => '', 'value' => 0, 'string' => ''),
+        'res' => TRUE,
+      ),
+    );
+    foreach ($array as $value) {
+      $arg = $value['array'];
+      $ret = d2d_check_array($arg, $checks);
+      $this->assertIdentical($ret, $value['res']);
+      if ($ret) {
+        $this->assertIdentical($arg, $value['expected']);
+      }
+    }
+
+    // d2d_bool_to_int
+    $this->assertIdentical(d2d_bool_to_int(NULL), NULL);
+    $this->assertIdentical(d2d_bool_to_int(FALSE), 0);
+    $this->assertIdentical(d2d_bool_to_int(TRUE), 1);
+
+    // d2d_check_convert_int
+    $array = array(
+      '0' => array('res' => TRUE, 'value' => 0),
+      '1' => array('res' => TRUE, 'value' => 1),
+      '42' => array('res' => TRUE, 'value' => 42),
+      '4.2' => array('res' => FALSE, 'value' => NULL),
+      'b0c' => array('res' => FALSE, 'value' => NULL),
+      'abc' => array('res' => FALSE, 'value' => NULL),
+      '' => array('res' => FALSE, 'value' => NULL),
+      '10.0' => array('res' => TRUE, 'value' => 10),
+    );
+    foreach ($array as $key => $value) {
+      $arg = $key;
+      $ret = d2d_check_convert_int($arg);
+      $this->assertIdentical($ret, $value['res']);
+      if ($ret) {
+        $this->assertIdentical($arg, $value['value']);
+      }
+    }
+    for ($i = 0; $i < 128; $i++) {
+      $id = d2d_random_d2d_id();
+      $this->assertTrue(d2d_check_d2d_id($id));
+    }
+  }
+/**
+ * Some static tests for the functions defined in includes/d2d.util.inc
+ */
+  public function testCrypto() {
+    // d2d_create_keys
+    $res = d2d_create_keys($public_key, $private_key);
+    $this->assertTrue($res, t('Failed creating public / private key pair.'));
+    if ($res) {
+      // d2d_check_key_pair
+      $this->assertTrue(d2d_check_key_pair($public_key, $private_key));
+      $this->assertTrue(d2d_check_key_pair($public_key, $private_key . '   '));
+      $this->assertTrue(d2d_check_key_pair($public_key . ' ', $private_key . '   '));
+      $this->assertTrue(d2d_check_key_pair($public_key . ' \r\n ', $private_key . '\n\t   '));
+      $this->assertTrue(d2d_check_key_pair($public_key . 'a\r\n ', $private_key . '\n\t  def'));
+      $this->assertFalse(d2d_check_key_pair('       ' . $public_key . ' ', '    ' . $private_key . '   '));
+      $this->assertFalse(d2d_check_key_pair('\n   ' . $public_key . '\n', '\n' . $private_key . '   \n'));
+      $this->assertFalse(d2d_check_key_pair('\t\n\r   ' . $public_key . '\t\t\r', '\r' . $private_key . '   \n'));
+      $this->assertFalse(d2d_check_key_pair('abc ' . $public_key, $private_key));
+      $this->assertFalse(d2d_check_key_pair('', ''));
+      $this->assertFalse(d2d_check_key_pair($private_key, $public_key));
+    
+      // d2d_sign
+      $data = 'The quick brown fox jumps over the lazy dog.';
+      $signer = 'John Doe';
+      $res = d2d_sign($data, $private_key, $signer);
+      $this->assertNotIdentical($res, FALSE, t('Failed signing data.'));
+      if ($res !== FALSE) {
+        $this->assertTrue(d2d_verify($res, $public_key, $array));
+        $this->assertIdentical($array['data'], $data);
+        $this->assertIdentical($array['signer'], $signer);
+      }
+
+      // d2d_encrypt
+      $this->assertTrue(d2d_encrypt($data, $encrypted_data, $public_key));
+      // d2d_decrypt
+      $this->assertTrue(d2d_decrypt($encrypted_data, $decrypted_data, $private_key));
+      $this->assertIdentical($decrypted_data, $data);
+    }
+  }
+}

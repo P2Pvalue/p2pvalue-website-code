@@ -1,0 +1,12 @@
+<div id="visualscience-recipients-div-{{thisTabId}}" style="border:solid black 1px;display:inline-block;width:100%;">
+	<div id="visualscience-recipient-div-content-{{thisTabId}}" style="width:100%;overflow-y:scroll;height:200px;">
+		{{#each user}}
+		<p id="visualscience-recipients-entry-{{this.tab}}-{{this.id}}" style="border-bottom:solid black 1px;margin:0px;padding:0px;">
+			<a onMouseOut="jQuery(this).css('color', '');" onMouseOver="jQuery(this).css({'color': '#FF0000', 'text-decoration':'none'});" onClick="vsConference.deleteRecipientToConference({{this.tab}}, {{this.id}});" id="visualscience-conference-close-cross-{{this.tab}}-{{this.id}}" style="border-right:solid black 1px;font-size:20px;padding-right:15px;padding-left:15px;margin-right:20px;">X</a>
+			<a class="visualscience-conference-recipients-infos" href="mailto:{{this.email}}">{{this.name}}</a>
+		</p>
+		{{/each}}
+	</div>
+	<input type="button" style="margin-left:10px;margin-right:10px;" value="Add Recipient" id="visualscience-conference-add-recipient-button-{{thisTabId}}" nbRecipients="{{nbUsers}}" onClick="vsConference.addRecipientForConference({{thisTabId}});" />
+	<input type="email" name="visualscience-conference-add-recipient-email-{{thisTabId}}" id="visualscience-conference-add-recipient-email-{{thisTabId}}" placeholder="Type an email" onKeyPress="if (event.keyCode == 13) vsConference.addRecipientForConference({{thisTabId }});" />
+</div>

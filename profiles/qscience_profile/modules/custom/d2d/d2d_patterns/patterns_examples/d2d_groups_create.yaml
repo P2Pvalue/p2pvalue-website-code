@@ -1,0 +1,27 @@
+info:
+  title: D2D groups CREATE
+  category: D2D
+  description: Groups example
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_group:
+  - 
+    modify:
+      tag: d2d_group
+      name: friends
+      description: These are my real friends
+      default: 1
+      id: 1
+  - 
+    create:
+      tag: d2d_group
+      name: friends_with_benefits
+      description: N/A
+      default: 0

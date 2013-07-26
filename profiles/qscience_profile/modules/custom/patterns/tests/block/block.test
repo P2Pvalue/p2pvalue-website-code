@@ -1,0 +1,153 @@
+<?php
+/**
+ * @file
+ * SimpleTests for the Block component of Patterns.
+ */
+
+class PatternsBlockTestCase extends PatternsTestCase {
+
+  var $block_tests_dir;
+
+  static function getInfo() {
+    return array(
+      'name' => 'Block component',
+      'description' => 'Creates and deletes a custom block. Modifies module-provided and custom blocks.',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->block_tests_dir = $this->getPatternsTestDir() . 'block/';
+
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+    );
+
+    parent::setUp($modules);
+  }
+
+
+  public function testCreateModifyDelete() {
+    $this->testCreate();
+    $this->testModify();
+    $this->testDelete();
+  }
+
+  private function testCreate() {
+    // The block should not exist at this point.
+    $block_count = db_select('block', 'b')
+      ->fields('b', array('bid'))
+      ->condition('module', 'block')
+      ->condition('title', 'Test title')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($block_count, '0', t('The custom block should not exist at this point.'));
+
+    // Run the pattern.
+    parent::runFile('block.yaml', 'Blocks (create)', $this->block_tests_dir);
+
+    // Expected messages.
+    $this->assertUniqueText(t('New block successfully added'));
+
+    // The block should exist with the right values for the bartik and seven themes.
+    $block = db_select('block', 'b')
+      ->fields('b')
+      ->condition('module', 'block')
+      ->condition('theme', 'bartik')
+      ->condition('title', 'Test title');
+    $block->join('block_custom', 'bc', 'b.delta = bc.bid');
+    $block = $block->fields('bc')->execute()->fetchAll();
+    $this->assertIdentical(count($block), 1);
+    $this->assertIdentical($block[0]->status, '0');
+    $this->assertIdentical($block[0]->weight, '0');
+    $this->assertIdentical($block[0]->region, '-1');
+    $this->assertIdentical($block[0]->custom, '1');
+    $this->assertIdentical($block[0]->visibility, '1');
+    $this->assertEqual($block[0]->pages, "<front>");
+    $this->assertIdentical($block[0]->body, 'Here comes the body text.');
+    $this->assertIdentical($block[0]->info, 'Test custom block');
+    $this->assertIdentical($block[0]->format, 'filtered_html');
+
+    $block = db_select('block', 'b')
+      ->fields('b')
+      ->condition('module', 'block')
+      ->condition('theme', 'seven')
+      ->condition('title', 'Test title');
+    $block->join('block_custom', 'bc', 'b.delta = bc.bid');
+    $block = $block->fields('bc')->execute()->fetchAll();
+    $this->assertIdentical(count($block), 1);
+    $this->assertIdentical($block[0]->status, '1');
+    $this->assertIdentical($block[0]->weight, '4');
+    $this->assertIdentical($block[0]->region, 'content');
+    $this->assertIdentical($block[0]->custom, '1');
+    $this->assertIdentical($block[0]->visibility, '1');
+    $this->assertEqual($block[0]->pages, "<front>");
+  }
+
+  private function testDelete() {
+    // Run the pattern.
+    parent::runFile('block_delete.yaml', 'Blocks (custom) delete', $this->block_tests_dir);
+
+    //IMPORTANT: the delta values might need to be changed in both (pattern and test) if there
+    //were already some custom blocks. We keep 1 since is the default value for a clean installation
+    
+    // Expected messages. Removing the delta since this might need to be changed
+    $this->assertText('Removed all the configuration for custom block delta');
+
+    // The block should not exist at this point.
+    $block_count = db_select('block', 'b')
+      ->fields('b', array('bid'))
+      ->condition('module', 'block')
+      ->condition('title', 'Test title')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($block_count, '0', t('The custom block should not exist at this point.'));
+  }
+
+  private function testModify() {
+    // Run the pattern.
+    parent::runFile('block_modify.yaml', 'Blocks (modify)', $this->block_tests_dir);
+
+    //IMPORTANT: the delta values might need to be changed in both (pattern and test) if there
+    //were already some custom blocks. We keep 1 since is the default value for a clean installation
+
+    // The custom block should exist with the right values for the bartik and seven themes.
+    $block = db_select('block', 'b')
+      ->fields('b')
+      ->condition('module', 'block')
+      ->condition('theme', 'bartik')
+      ->condition('delta', '1');
+    $block->join('block_custom', 'bc', 'b.delta = bc.bid');
+    $block = $block->fields('bc')->execute()->fetchAll();
+
+    $this->assertIdentical(count($block), 1);
+    $this->assertIdentical($block[0]->status, '1');
+    $this->assertIdentical($block[0]->title, 'Test title2');
+    $this->assertIdentical($block[0]->weight, '4');
+    $this->assertIdentical($block[0]->region, 'header');
+    $this->assertIdentical($block[0]->custom, '1');
+    $this->assertIdentical($block[0]->visibility, '1');
+    $this->assertEqual($block[0]->pages, "<front>");
+
+    $block = db_select('block', 'b')
+      ->fields('b')
+      ->condition('module', 'block')
+      ->condition('theme', 'seven')
+      ->condition('delta', '1');
+    $block->join('block_custom', 'bc', 'b.delta = bc.bid');
+    $block = $block->fields('bc')->execute()->fetchAll();
+
+    $this->assertIdentical(count($block), 1);
+    $this->assertIdentical($block[0]->status, '1');
+    $this->assertIdentical($block[0]->weight, '4');
+    $this->assertIdentical($block[0]->region, 'content');
+    $this->assertIdentical($block[0]->custom, '1');
+    $this->assertIdentical($block[0]->visibility, '1');
+    $this->assertEqual($block[0]->pages, "<front>");
+
+    $block = db_select('block', 'b')
+      ->fields('b')->execute()->fetchAll();
+    $this->drupalGet('admin/structure/block');
+    $this->drupalGet('admin/structure/block/manage/block/1/configure');
+  }
+}

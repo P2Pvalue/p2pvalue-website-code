@@ -1,0 +1,21 @@
+# YAML Block Pattern
+# QScience
+# This pattern has been automatically generated at Patterns->Export
+
+info:
+  title: Blocks and Roles (create)
+  description: Makes search block visible for the role administrator
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+modules:
+  - block
+block_role:
+  - 
+    create:
+      tag: block_role
+      module: search
+      delta: form
+      role: administrator

@@ -1,0 +1,32 @@
+info:
+  title: D2D own instance modify
+  category: D2D
+  description: Own instance example
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_own_instance:
+  - 
+    modify:
+      tag: d2d_own_instance
+      d2d_id: C2E31F15167407B621624F167282DA44
+      name: '17 - Patterns Client'
+      url: http://localhost/17/xmlrpc.php
+      description: this is my instance.
+      public_key: |
+                -----BEGIN PUBLIC KEY-----
+		MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDcOASNg8wZwjgRyOEKDGdthC0g
+                vO3uyhZJt4tALu2DDD9hclq6IKGo4MP3M2N9rkUqhI/OIvIPF20F8LL4JNX6IyHy
+                sCoDC116mBvjB5+LdqqQdR9jz1pMHUbSZ4952LSGVFmbkpcrqz57edXmV84iVKEk
+                /3eXk5yKByjSY85dzwIDAQAB
+                -----END PUBLIC KEY-----
+      private_key: |
+		-----BEGIN PRIVATE KEY-----
+		My private key
+		-----END PRIVATE KEY-----

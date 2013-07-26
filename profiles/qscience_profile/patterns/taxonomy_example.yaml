@@ -1,0 +1,20 @@
+# YAML Taxonomies Pattern
+# QScience
+
+info:
+  title: Create a vocabulary
+  description: Add a test vocabulary named 'anothervoc'
+  author: QScience
+  category: Taxonomy
+  version: 1.0
+  core: 7.x
+  author_email: sbalietti@ethz.ch
+  author_website: http://qlectives.eu/
+  
+actions:
+  - create:
+        tag: vocabulary
+        name: Another Vocabulary
+        machine_name: anothervoc
+        description: Just another vocabulary
+        hierarchy: 0

@@ -1,0 +1,29 @@
+# YAML Content Pattern
+# QScience
+
+info:
+  title: Content Type (modify)
+  description: Modifies a Content Type
+  author: QScience
+  category: Content
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+actions:
+
+  - modify:
+     tag: content_type
+     name: Test Content Type2
+     type: test_content_type # machine readable name
+     description: Test Content Type Long Description2
+     title_label: Title of Test Content Type2
+     node_preview: 2
+     help: help text2
+     node_options:
+      - promote
+      - sticky
+      - revision
+
+#     node_submitted: # TODO
+#     comment*: # TODO

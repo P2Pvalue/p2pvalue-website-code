@@ -1,0 +1,269 @@
+<?php
+/*
+ * @file
+ * Patterns Client module.
+ *
+ */
+
+module_load_include('inc', 'patterns_client', 'includes/constants');
+module_load_include('inc', 'patterns_client', 'includes/config');
+module_load_include('inc', 'patterns_client', 'includes/io');
+
+/**
+ * Implements hook_help().
+ */
+function patterns_client_help($path,$arg) {
+  switch ($path) {
+    case "admin/help#patterns_client":
+      return '<p>'.t("Help for patterns_client module").'<p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function patterns_client_menu() {
+  // Add new tab in Patterns main menu to gather all remote operations
+  $items['admin/patterns/remote'] = array(
+      'title' => 'Remote',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('patterns_client_search_form'),
+      'access arguments' => array('administer patterns'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => -1,
+  );
+  // Add new sub tab with search and list as default
+  $items['admin/patterns/remote/search'] = array(
+      'title' => 'Patterns at Server',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('patterns_client_search_form'),
+      'access arguments' => array('administer patterns'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  // Add new sub tab for the subscriptions function
+  $items['admin/patterns/remote/subscriptions'] = array(
+      'title' => 'Subscriptions',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('patterns_client_search_form'),
+      'access arguments' => array('administer patterns'),
+      'type' => MENU_LOCAL_TASK,
+  );
+  // Add new entry to fetch patterns from server (based on server PID)
+  $items['admin/patterns/remote/fetch/%'] = array(
+      'page callback' => 'patterns_client_fetch_pattern',
+      'page arguments' => array(4),
+      'access arguments' => array('administer patterns'),
+      'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function patterns_client_permission() {
+  return array(
+    'access patterns_client' => array(
+      'title' => t('Access permission for the patterns_client module'),
+      )
+    );
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function patterns_client_menu_alter(&$items) {
+  $items['admin/patterns/share'] = array(
+    'title' => 'Share',
+    'page callback' => 'patterns_client_config',
+    'access arguments' => array('administer patterns'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 9,
+  );
+  $items['admin/patterns/list'] = array(
+    'title' => 'Local',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  return $items;
+}
+
+function patterns_client_patterns_publish($pattern) {
+  if (variable_get('patterns_client_auto_publish', FALSE)) {
+    patterns_client_push_patterns(array($pattern));
+  }
+  else {
+    drupal_set_message(t('Automatic publishing of patterns not enabled.'), 'warning');
+  }
+}
+
+/**
+ * 
+ * Fetches a pattern from the server and adapt it to include the
+ * current user and the parenthood relationship.
+ * 
+ * @param string $pid  Pattern ID in the server
+ */
+function patterns_client_fetch_pattern($pid) {
+  // Retrieve new pattern already modified to include the parent
+  $result = _patterns_client_fetch_server_pattern($pid);
+
+  // Display a message according to the status return by _patterns_io_save_pattern()
+  if (!empty($result['msg'])) {
+    $type = ($result['status'] == PATTERNS_SUCCESS) ? 'status' : 'error';
+    drupal_set_message($result['msg'], $type);
+  }
+  drupal_goto('admin/patterns/remote/search');
+}
+
+/**
+ * Implements hook_form().
+ * 
+ * Generates a form to search for patterns in the server according to different criteria.
+ * The results are output in a table as part of the form itself. Depending on the existence
+ * or not of arguments, a different function will be called:
+ *   - No arguments: returns the whole list of patterns stored in the server.
+ *   - Search: returns only the patterns that match the given criteria.
+ * 
+ * @param $form
+ * @param $form_state
+ * @return array  Form to perform the search.  
+ */
+function patterns_client_search_form($form, &$form_state) {
+  $form['patterns_search']= array(
+      '#type' => 'container',
+      '#attributes' => array('class' => array('container-inline')),
+  
+  );
+  $form['patterns_search']['search'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Search'),
+      '#size' => 15,
+      '#attributes' => array('title' => t('Enter the terms you wish to search for.'), 'class' => array('container-inline')),
+  
+  );
+  $form['patterns_search']['selected'] = array(
+      '#type' => 'select',
+      '#title' => t('Selected'),
+      '#title_display' => 'invisible',
+      '#options' => array(
+          0 => t('Title'),
+          1 => t('Description'),
+          2 => t('Author'),
+          3 => t('UUID'),
+          4 => t('Pid'),
+      ),
+  );
+  
+  $form['patterns_search']['actions'] = array('#type' => 'actions');
+  $form['patterns_search']['actions']['submit'] = array('#type' => 'submit', '#value' => t('Search'));
+  $form['patterns_search']['#submit'][] = 'patterns_client_search_form_submit';
+  
+  // Retrieve the whole list if no arguments are given, perform a search otherwise
+  $patterns_list  = array();
+  if (!isset($form_state['input']['patterns_list'])) {
+    $patterns_list = _patterns_client_get_patterns_server_list(10000);
+  }else{
+    $patterns_list = $form_state['input']['patterns_list'];
+    // In case a search query has been perforem, add extra "view all" button
+    $form['patterns_search']['actions']['view_all'] = array(
+        '#type' => 'submit',
+        '#value' => t('View all'),
+        '#submit' => array('patterns_client_search_form_view_all_submit'),
+    );
+  }
+  
+  // Display the results in a table, or no results found message otherwise
+  if (sizeof($patterns_list)>0) {
+    // Prepare header and rows to be themed as a table
+    //Added Attributes below to allow the link to open in a separate window
+    $header = array(
+        array('data' => t('PID (in the server)')),
+        array('data' => t('UUID')),
+        array('data' => t('Title')),
+        array('data' => t('Description')),
+        array('data' => t('Author')),
+        array('data' => t('Format')),
+        array('data' => t('Preview')),
+        array('data' => t('Pull')),
+    );
+    foreach ($patterns_list as $pattern) {
+      $rows[] = array(
+          array('data' => $pattern['pid']),
+          array('data' => $pattern['uuuid']),
+          array('data' => $pattern['title']),
+          array('data' => $pattern['description']),
+          array('data' => $pattern['author']),
+          array('data' => $pattern['format']),
+          array('data' => l(t('Preview'), $pattern['view_url'], array('attributes'=>array('target'=>'blank')))),
+          array('data' => (_patterns_client_row_count_uuuid($pattern['uuuid']) > 0) ? t('Already pulled'): l(t('Pull'), 'admin/patterns/remote/fetch/' . $pattern['pid'])),
+      );
+    }
+    
+    $form['table'] = array(
+        '#theme' => 'table',
+        '#header' => $header,
+        '#rows' => $rows,
+        '#empty' => t('Empty Rows')
+    );
+
+  }else{
+    // Display a message to inform about no results found
+    if (isset($patterns_list)) {
+      drupal_set_message(t('No patterns matched the given criteria'), 'status');
+    }
+  }
+ 
+  return $form;
+}
+
+/**
+ * 
+ * Implementation of hook_form_validate().
+ * 
+ * Search form validation from the client side
+ * 
+ * @param $form
+ * @param $form_state
+ */
+function patterns_client_search_form_validate($form, &$form_state) {
+  // Checks the query is not empty and the type is within the proper range.
+  if ($form_state['values']['search'] == '') {
+    form_set_error('search', t('Please enter some keywords.'));
+  }
+  if ($form_state['values']['selected'] < 0 || $form_state['values']['selected']> 4) {
+    form_set_error('selected', t('Type should be an integer value in the range 0-4.'));
+  }
+}
+
+/**
+ * 
+ * Implementation of hook_form_submit().
+ * 
+ * Main function to perform the search.
+ * 
+ * @param $form
+ * @param $form_state
+ */
+function patterns_client_search_form_submit($form, &$form_state) {
+  // Rebuild the form populating with the values from the query
+  $token = $form_state['values']['search'];
+  $type = $form_state['values']['selected'];
+  $form_state['input']['patterns_list'] = _patterns_client_search_server_pattern($token, $type);
+  $form_state['rebuild'] = true;
+}
+
+/**
+ * Implementation of hook_form_submit().
+ * 
+ * Secondary function, to return to the search page without providing any parameters.
+ * 
+ * @param $form
+ * @param $form_state
+ */
+function patterns_client_search_form_view_all_submit($form, &$form_state) {
+  drupal_goto('admin/patterns/remote/search');
+}

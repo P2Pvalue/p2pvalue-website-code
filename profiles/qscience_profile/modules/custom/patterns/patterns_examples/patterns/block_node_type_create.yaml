@@ -1,0 +1,21 @@
+# YAML Block Pattern
+# QScience
+# This pattern has been automatically generated at Patterns->Export
+
+info:
+  title: Blocks and Node types (create)
+  description: Makes search block visible for the content type page
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+modules:
+  - block
+block_node_type:
+  - 
+    create:
+      tag: block_node_type
+      module: search
+      delta: form
+      type: page

@@ -1,0 +1,9 @@
+name = VisualScience_patterns
+description = "Add Patterns integration to load configuration from text files"
+package = VisualScience
+core = 7.x
+php = 5.3
+
+dependencies[] = visualscience
+dependencies[] = patterns
+

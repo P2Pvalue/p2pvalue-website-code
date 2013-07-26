@@ -1,0 +1,43 @@
+# YAML Content Create journal Pattern
+# QScience
+
+info:
+  title: Journal(content types create)
+  description: Creates following content types Journal
+  author: QScience
+  category: Content
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+  
+actions:
+  - create:
+      tag: content_type
+      name: Journal
+      type: journal
+      description:  create a content type that can describe Journal
+      title_label: Journal Content Type
+      node_preview: 1
+      help: create a content type that can describe Journal
+      node_options:
+        - status
+        - promote
+        - sticky
+  - create:
+      tag: instance
+      entity: node
+      bundle: journal
+      name: title
+      label: Title
+      type: text
+      widget: text_textfield      
+      weight: 1
+  - create:
+      tag: instance
+      entity: node
+      bundle: journal
+      name: field
+      label: Field
+      type: text
+      widget: text_textfield
+      weight: 2

@@ -1,0 +1,429 @@
+<?php
+/**
+ * @file
+ * Installation file for the D2D module.
+ */
+
+require_once 'includes/d2d.constants.inc';
+
+/**
+ * Implements hook_install()
+ */
+function d2d_install() {
+  variable_set('d2d_online', FALSE);
+  variable_set('d2d_utc_offset', D2D_UTC_OFFSET_DEFAULT);
+  variable_set('d2d_timeout', D2D_TIMEOUT_DEFAULT);
+  variable_set('d2d_delta_0', D2D_DELTA_0_DEFAULT);
+  variable_set('d2d_delta_1', D2D_DELTA_1_DEFAULT);
+  variable_set('d2d_my_id', NULL);
+  $group_id = db_insert('d2d_groups')->fields(array(
+      'name' => 'friends',
+      'description' => 'N/A',
+      'auto_member' => 1,
+    ))->execute();
+  foreach (array('d2d_get_public_key', 'd2d_list_permissions') as $method_name) {
+    $m_id = db_insert('d2d_permissions')->fields(array(
+      'group_id' => $group_id,
+      'method' => $method_name,
+    ))->execute();
+  }
+  menu_rebuild();
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function d2d_uninstall() {
+  variable_del('d2d_online');
+  variable_del('d2d_my_id');
+  variable_del('d2d_utc_offset');
+  variable_del('d2d_timeout');
+  variable_del('d2d_delta_0');
+  variable_del('d2d_delta_1');
+  variable_del('d2d_private_key');
+  
+  drupal_uninstall_schema('d2d');
+}
+
+/**
+ * Implements hook_schema()
+ */
+function d2d_schema() {
+  $schema = array();
+  $schema['d2d_instances'] = array(
+    'description' => 'Stores information on Drupal instances.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'primary identifier (local id)',
+      ),
+      'd2d_id' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_IDENTIFIER_LENGTH,
+        'not null' => TRUE,
+        'description' => 'global d2d id',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_NAME_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'name of the Drupal instance',
+      ),
+      'url' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_URL_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'address of the Drupal instance',
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_DESCRIPTION_MAX_LENGTH,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'description of the Drupal instance',
+      ),
+      'time_inserted' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'time this entry was inserted',
+      ),
+      'last_alive' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'time the Drupal instance was last seen',
+      ),
+      'public_key_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'description' => 'id of public key belonging to this instance',
+      ),
+      // four different states of friendship
+      // 0: no friendship
+      // 1: friendship request sent but not accepted
+      // 2: friendship request received but not accepted
+      // 3: friendship established
+      'friendship_state' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'integer indicating the state of friendship',
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array('d2d_id' => array('d2d_id')),
+  );
+  $schema['d2d_public_keys'] = array(
+    'description' => 'Stores information on public keys.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'primary identifier',
+      ),
+      'instance_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'id of instance associated with this public key',
+      ),
+      'public_key' => array(
+        'type' => 'varchar',
+        'length' => D2D_PUBLIC_KEY_MAX_LENGTH,
+        'not null' => FALSE,
+        'description' => 'public key',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['d2d_groups'] = array(
+    'description' => 'Stores information on groups of Drupal instances.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'primary identifier',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => D2D_GROUP_NAME_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'name identifying the group',
+      ),
+      'description' => array(
+        'type' => 'varchar',
+        'length' => D2D_GROUP_DESCRIPTION_MAX_LENGTH,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'description of the group',
+      ),
+      'auto_member' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'flag indicating whether a newly added instance should automatically be a member of this group',
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array('name' => array('name')),
+  );
+  $schema['d2d_permissions'] = array(
+    'description' => 'Stores information on permissions of groups of Drupal instances on remote methods.',
+    'fields' => array(
+      'group_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'group id',
+      ),
+      'method' => array(
+        'type' => 'varchar',
+        'length' => D2D_METHOD_NAME_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'name identifying the method',
+      ),
+    ),
+    'primary key' => array('group_id', 'method'),
+  );
+  $schema['d2d_group_memberships'] = array(
+    'description' => 'Stores information on Drupal instances being members of groups.',
+    'fields' => array(
+      'instance_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'instance id',
+      ),
+      'group_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'group id',
+      ),
+    ),
+    'primary key' => array('instance_id', 'group_id'),
+  );
+  $schema['d2d_nonces'] = array(
+    'description' => 'Stores recently used pairs of nonces and timestamps.',
+    'fields' => array(
+      'nonce' => array(
+        'type' => 'varchar',
+        'length' => D2D_NONCE_LENGTH,
+        'not null' => TRUE,
+        'description' => 'nonce',
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'timestamp of the nonce',
+      ),
+    ),
+    'primary key' => array('nonce', 'timestamp'),
+  );
+  $schema['d2d_notifications'] = array(
+    'description' => 'Stores information on notifications.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'primary identifier',
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => D2D_NOTIFICATION_TYPE_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'type of notification',
+      ),
+      'd2d_id' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_IDENTIFIER_LENGTH,
+        'not null' => TRUE,
+        'description' => 'global d2d id',
+      ),
+      'content' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'description' => 'content / data of the notification',
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'timestamp of the notification',
+      ),
+      'seen' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'flag indicating whether the notification has been read',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['d2d_outgoing_requests'] = array(
+    'description' => 'Stores information on outgoing requests.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'primary identifier',
+      ),
+      'receiver_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => '(internal) id of the instance the request is sent to',
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => D2D_REQUEST_TYPE_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'type of the request',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'description' => 'data sent with this request',
+      ),
+      'time_insert' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'timestamp the request was inserted',
+      ),
+      'time_next_send' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'earliest time the request will be sent (again)',
+      ),
+      'time_invalid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'time from which on the request will not be sent anymore',
+      ),
+      'max_send_trials' => array(
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'number of times this request will be resent',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['d2d_incoming_requests'] = array(
+    'description' => 'Stores information on incoming requests.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'primary identifier',
+      ),
+      'sender_d2d_id' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_IDENTIFIER_LENGTH,
+        'not null' => TRUE,
+        'description' => 'D2D id the request was received from',
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => D2D_REQUEST_TYPE_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'type of the request',
+      ),
+      'arguments' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'description' => 'arguments received with the request',
+      ),
+      'time_insert' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'timestamp the request was inserted into the database',
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'timestamp of the request',
+      ),
+      'url' => array(
+        'type' => 'varchar',
+        'length' => D2D_INSTANCE_URL_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'address under which the sender of the request claims to be available',
+      ),
+      'ip' => array(
+        'type' => 'varchar',
+        'length' => D2D_IP_MAX_LENGTH,
+        'not null' => TRUE,
+        'description' => 'ip the request was received from',
+      ),
+      'signed_data' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'description' => 'part of the request that was signed',
+      ),
+      'signature' => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'description' => 'signature of the part that was signed',
+      ),
+      'signature_valid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'flag indicating whether the signature is valid or not',
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  return $schema;
+}
+
+/**
+ * Implements hook_requirements()
+ */
+function d2d_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+  $openssl_installed = defined('OPENSSL_VERSION_TEXT');
+  $php_version = phpversion();
+  // report and test PHP version
+  $requirements['d2d_php'] = array(
+    'title' => $t('PHP'),
+    'value' => $php_version,
+  );
+  if (version_compare($php_version, D2D_MINIMUM_PHP) < 0) {
+    $requirements['d2d_php']['description'] = $t('Your PHP installation is too old. D2D requires at least PHP %version.', array('%version' => D2D_MINIMUM_PHP));
+    $requirements['d2d_php']['severity'] = REQUIREMENT_ERROR;
+  }
+  // report and test if OpenSSL is enabled
+  $requirements['d2d_openssl'] = array(
+    'title' => $t('OpenSSL'),
+    'value' => $openssl_installed ? $t('Enabled @version', array('@version' => OPENSSL_VERSION_TEXT)) : $t('Not found.'),
+  );
+  if (!$openssl_installed) {
+    $requirements['d2d_openssl']['description'] = $t('D2D requires OpenSSL extension in PHP being enabled');
+    $requirements['d2d_openssl']['severity'] = REQUIREMENT_ERROR;
+  }
+  return $requirements;
+}

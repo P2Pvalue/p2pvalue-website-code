@@ -1,0 +1,40 @@
+info:
+  title: D2D Public keys with select CREATE
+  category: D2D
+  description: Public keys example with selected keys
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_public_key:
+  - 
+    create:
+      tag: d2d_public_key
+      d2d_id: 8AAE7EAEB0D53A63EFFB1ED107F829D6
+      public_key: |
+        |
+                -----BEGIN PUBLIC KEY-----
+                MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCwOseFW7YFiUMMVIiRCZ2X+e+5
+                2G5L59J1MjvA5cNQDihU8GVeGP8kSuP6PUAL3q/yfPMghQuWwUkHjjK6N72MRK6Z
+                VJr0IWqFfipXIjwfWamuwQlBukahCz4YTmVTy+ndQlh5b9IXhBk0afJ5esDvobjH
+                HlyNqvNCt7Ey0lY8fQIDAQAB
+                -----END PUBLIC KEY-----
+      selected: true
+  - 
+    create:
+      tag: d2d_public_key
+      d2d_id: 433739DD30328CD11C49580DD661A5B9
+      public_key: |
+        |
+                -----BEGIN PUBLIC KEY-----
+                MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCeyC5QnZLZAdMJQqZQyyJROqdG
+                OD4ucktG5ZTAUeaDWZqdHSQe1r7ZaYjFxP0gRO4dz6TNlFVc6xmsmHwPgA7TDFog
+                PaYofhuSvLjGTVB9QkeF9wA7+xMwASji453ZGHBWJw68IVQfku7V31RXa2/kVTaa
+                Hpias9bLzjKMs0Y//wIDAQAB
+                -----END PUBLIC KEY-----
+      selected: true

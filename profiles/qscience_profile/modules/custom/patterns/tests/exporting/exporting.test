@@ -1,0 +1,102 @@
+<?php
+/**
+ * @file
+ * Tests importing files.
+ */
+
+class PatternsExportTestCase extends PatternsTestCase {
+
+  
+
+  var $importing_tests_dir;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Exporting files',
+      'description' => 'Tests exporting patterns files.',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->exporting_tests_dir = $this->getPatternsTestDir() . 'exporting/';
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+    								 'patterns_export',
+    								 'macro',
+    );
+
+    parent::setUp($modules);
+  }
+
+  public function testExportTaxonomy() {
+
+    $destination = patterns_path_get_files_dir();
+	  
+		// Fill the form.
+    $edit = array();
+    
+    $pattern_str = $this->loadPattern('exporting.yaml', $this->exporting_tests_dir);
+		$pattern_array = patterns_parser_parse($pattern_str, PATTERNS_FORMAT_YAML);
+		$pattern_name = 'exp_test';
+    
+		// Importing
+		
+    $edit['name'] = 'imported';
+    $edit['content'] = $pattern_str;
+    $edit['destination'] = $destination;
+    $edit['format'] = PATTERNS_FORMAT_YAML;
+
+    // Post the form.
+    $this->drupalPost('admin/patterns/import/source', $edit, t('Import'));
+    
+    $imp_pattern = patterns_get_pattern('imported.yaml');
+    $result = $this->assertTrue($imp_pattern !== FALSE, t('Importing a pattern (before exporting it) worked.'));
+  
+    if (!$result) {
+    	$this->fail('Import failed');
+    	return FALSE;
+    }
+    
+    // Exporting
+    $export_form = array();
+    $export_form['all'] = 1;
+    $export_form['ext[taxonomy][options][vocabulary]'] = 1;
+    $export_form['export[to]'] = PATTERNS_EXPORT_TO_DB;
+    $export_form['format'] = PATTERNS_FORMAT_YAML;
+    $export_form['pattern_name'] = 'exported';
+
+    // Post the form. 
+    $this->drupalPost('admin/patterns/export', $export_form, t('Export'));
+		
+    $result = $this->assertNoText(t('No valid format selected.'), t('No errors in the export format'));
+    $result = $result && $this->assertNoText(t('Please specify a valid file name.'), t('No errors in the name of the export file'));
+    $result = $result && $this->assertNoText(t('Please specify a valid export mode.'), t('No errors in the export mode'));
+    $result = $result && $this->assertNoText(t('No info section found.'), t('Info section found'));
+    $result = $result && $this->assertNoText(t('Export did not return any data.'),  t('Export returned data.'));
+  	if (!$result) {
+  		$this->fail(t('Export failed'));
+    	return FALSE;
+    }
+  
+    
+    $patterns = patterns_db_get_patterns();
+    $this->assertTrue(count($patterns) == 2, t('Exported pattern was inserted into the database.'));
+    
+    $exported = patterns_get_pattern('exported.yaml');
+    $this->assertTrue($exported !== FALSE, t('Exported pattern correctly found in the database'));
+    
+    $exp_pattern_array = $exported->pattern;
+    $this->assertNotNull($exp_pattern_array, t('Exported pattern is not empty'));
+    
+    // TODO: Cannot test this
+    // Simpletests fails, and returns a wrong database from which exporting data
+    // Anyway, I should test only the content of the action, not the whole pattern
+    //$this->assertIdentical($exp_pattern_array, $pattern_array, t('Exported pattern is identical to imported one.'));
+    
+  }
+
+} // Class
+

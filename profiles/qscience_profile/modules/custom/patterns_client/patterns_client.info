@@ -1,0 +1,7 @@
+name = Patterns Client beta
+description = Manages an encrypted communication with a Patterns server
+core = 7.x
+
+package = Patterns
+dependencies[] = patterns
+dependencies[] = d2d

@@ -1,0 +1,471 @@
+<?php
+ini_set('display_errors', 1);
+$VISUALSCIENCE_DOCGRAPH_MIN_REF_DEFAULT = 1000000;
+$VISUALSCIENCE_DOCGRAPH_MAX_REF_DEFAULT = 0;
+
+$VISUALSCIENCE_DOCGRAPH_MIN_REF = 1000000;
+$VISUALSCIENCE_DOCGRAPH_MAX_REF = 0;
+
+function visualscience_docgraph_node_view($node, $view_mode, $langcode) {
+  if ($node->type === 'paper') {
+    
+    if (!isset($node->content['field_paper_upload'])) {
+      return;
+    }
+    
+//    print_r($node->content);
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/arbor2.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/io.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/help.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/dashboard.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/graphics.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/parseur.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/renderer.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/halfviz.js', 'file');
+    
+    $node->content['list'] = array(
+      '#markup' => '<div id="halfviz">
+    <canvas style="border: 1px solid #999; border-radius: 5px; box-shadow: 0 0 5px #888;" id="viewport" width="800" height="600"></canvas>
+    <div id="editor">
+      <div class="io">
+        <ul class="dialog"></ul>
+      </div>
+      
+    </div>
+    <div id="grabber"></div>
+  </div>',
+      '#weight' => 5
+    );
+    
+    $str = '';
+    $lang = $node->content['field_paper_upload']['#language'];
+    $name = $node->content['field_paper_upload']['#object']->title;
+    
+    // get occurences
+    $min = 1000000;
+    $max = 0;
+    $amount_to_id = array();
+    $result = db_query("SELECT citation_reference_target_id AS id, COUNT(*) AS cnt
+      FROM {field_data_citation_reference}
+      GROUP BY citation_reference_target_id;");
+    foreach ($result as $obj) {
+      $amount_to_id[$obj->id] = $obj->cnt;
+      $cnt = (int)$obj->cnt;
+      if ($cnt > $max) $max = $cnt;
+      if ($cnt < $min) $min = $cnt;
+    }
+    
+    $color_to_title = array();
+    foreach ($node->content['field_paper_upload']['#object']->citation_reference[$lang] as $cit) {
+      $actAmount = (int)$amount_to_id[$cit['entity']->vid];
+      $col = dechex(160 - ($actAmount - 1) / $max * 160);
+      $str .= "x" . " -> " . substr($cit['entity']->title, 0, 30) . "... (". $amount_to_id[$cit['entity']->vid] .")\n";
+      
+      $obj = new stdClass();
+      $obj->col = $col;
+      $obj->id = $cit['entity']->vid;
+      $color_to_title[substr($cit['entity']->title, 0, 30) . "... (". $amount_to_id[$cit['entity']->vid] .")"] = $obj;
+    }
+    $str .= "\n\nx{color: #111111, id: 1324}";
+    foreach ($color_to_title as $title => $obj) {
+      $str .= "\n". $title ."{color: #". $obj->col . $obj->col . $obj->col .", id: ". $obj->id ."}";
+    }
+    drupal_add_js(
+      array(
+        'visualscience_docgraph' => array(
+          'graph' => $str,
+        )
+      ),
+      'setting');
+    
+  } elseif ($node->type === 'author') {
+    
+//    return;
+    
+    $papers = array();
+    
+    $result = db_query("SELECT entity_id AS paper_id, title
+      FROM {field_data_author_reference}, {node}
+      WHERE nid = entity_id AND author_reference_target_id = ". $node->vid .";");
+    foreach($result as $res) {
+      $obj = new stdClass();
+      $obj->title = $res->title;
+      $papers[$res->paper_id] = $obj;
+    }
+    
+    if (count($papers) < 1) return;
+    
+    $min = 1000000;
+    $max = 0;
+    $result = db_query("SELECT citation_reference_target_id AS id, COUNT(*) AS cnt
+      FROM {field_data_citation_reference}
+      WHERE citation_reference_target_id IN (". implode(", ", array_keys($papers)) .")
+      GROUP BY citation_reference_target_id;");
+    foreach($result as $res) {
+      $cnt = (int)$res->cnt;
+      if ($cnt > $max) $max = $cnt;
+      if ($cnt < $min) $min = $cnt;
+      $papers[$res->id]->cnt = $res->cnt;
+    }
+    
+//    print_r($node->content);
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/arbor2.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/io.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/help.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/dashboard.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/graphics.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/parseur.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/renderer.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/halfviz.js', 'file');
+    
+    $node->content['list'] = array(
+      '#markup' => '<div id="halfviz">
+    <canvas style="border: 1px solid #999; border-radius: 5px; box-shadow: 0 0 5px #888;" id="viewport" width="800" height="600"></canvas>
+    <div id="editor">
+      <div class="io">
+        <ul class="dialog"></ul>
+      </div>
+      
+    </div>
+    <div id="grabber"></div>
+  </div>',
+      '#weight' => 5
+    );
+    
+    $str = '';
+    
+    $color_to_title = array();
+    foreach ($papers as $id => $p) {
+      $actAmount = (int)$p->cnt;
+      $col = dechex(160 - ($actAmount - 1) / $max * 160);
+      $str .= "x" . " -> " . substr($p->title, 0, 20) . "... (". $p->cnt .")\n";
+      
+      $obj = new stdClass();
+      $obj->col = $col;
+      $obj->id = $id;
+      $color_to_title[substr($p->title, 0, 20) . "... (". $p->cnt .")"] = $obj;
+    }
+    $str .= "\n\nx{color: #111111, id: 1324}";
+    foreach ($color_to_title as $title => $obj) {
+      $str .= "\n". $title ."{color: #". $obj->col . $obj->col . $obj->col .", id: ". $obj->id ."}";
+    }
+    drupal_add_js(
+      array(
+        'visualscience_docgraph' => array(
+          'graph' => $str,
+        )
+      ),
+      'setting');
+    
+  }
+}
+
+//function visualscience_docgraph_page_alter(&$page) {
+//  $page
+//}
+
+function visualscience_docgraph_menu() {
+  $items['visualscience_docgraph/%'] = array(
+      'page callback' => 'visualscience_docgraph_page',
+      'page arguments' => array(1),
+      'access callback' => TRUE,
+      'title' => 'Document graphs',
+  );
+  return $items;
+} 
+
+function visualscience_docgraph_page($a) {
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/arbor2.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/io.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/help.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/dashboard.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/graphics.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/parseur.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/renderer.js', 'file');
+  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/halfviz.js', 'file');
+//  drupal_add_js(drupal_get_path('module', 'visualscience_docgraph') . '/js/visualscience_docgraph.js', 'file');
+  
+  
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  $main_path = variable_get('visualscience_docgraph_main_path');
+  $path = $public_uri . $main_path;
+  
+  // TEMP
+//  _visualscience_docgraph_generate_author($path);
+  
+  $file_to_load = '';
+  if ($a == 'author') {
+    $file_to_load = 'author';
+  } elseif ($a == 'reference') {
+    $file_to_load = 'reference';
+  }
+  $path .= $file_to_load;
+  $json_content = file_get_contents($path);
+//  $json_content = drupal_json_decode($json_content);
+//  $json_content = $json_content['src'];
+  drupal_add_js(
+    array(
+      'visualscience_docgraph' => array(
+        'graph' => $json_content,
+      )
+    ),
+    'setting');
+  $page = array(
+    '#type' => 'markup',
+    '#markup' => t('<div id="halfviz">
+    <canvas style="border: 1px solid #999; border-radius: 5px; box-shadow: 0 0 5px #888;" id="viewport" width="800" height="600"></canvas>
+    <div id="editor">
+      <div class="io">
+        <ul class="dialog"></ul>
+      </div>
+      
+    </div>
+    <div id="grabber"></div>
+  </div>'),
+  );
+  return $page; 
+}
+
+function visualscience_docgraph_block_info() {
+    $blocks['graphs'] = array(
+        'info' => t('VisualScience - Document graphs'),
+        'region' => 'sidebar_first',
+        'weight' => -50,
+        'status' => TRUE
+    );
+    return $blocks;
+}
+
+function visualscience_docgraph_block_view($delta = '') {
+  if ($delta == 'graphs') {
+    $contents = '	<div class="title_block_head">
+						<h2>VisualScience - Document graphs</h2>	
+						<ul id="tab_menu">
+							<li><a href="'. url('visualscience_docgraph/author') .'" >Authors</a></li>
+							<li><a href="'. url('visualscience_docgraph/reference') .'" >Reference</a></li><!--
+							<li><a href="'. url('visualscience_docgraph/keyword') .'" >Keyword</a></li>-->
+							<div class="clear"></div>
+						</ul>
+					</div>';
+    $blocks['content'] = $contents;
+    
+    return $blocks;
+  }
+}
+
+function visualscience_docgraph_node_submit($node, $form, &$form_state) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF_DEFAULT, $VISUALSCIENCE_DOCGRAPH_MAX_REF_DEFAULT,
+          $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
+  
+//  dvm($node);
+  if ($form['#id'] == 'paper-node-form') {
+    // generating input files for graphs...
+
+    $public_uri = FALSE;
+    if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+      $public_uri = $wrapper->realpath();
+    }
+    $main_path = variable_get('visualscience_docgraph_main_path');
+    $path = $public_uri . $main_path;
+    
+    // reference
+    $result = db_query("SELECT n1.title AS t1, n2.title AS t2
+      FROM {field_data_citation_reference} r, {node} n1, {node} n2
+      WHERE n1.nid = r.entity_id AND n2.nid = r.citation_reference_target_id");
+    $fh = fopen($path . 'reference', "w");
+    foreach ($result as $term) {
+      $t1 = drupal_substr($term->t1, 0, 10);
+      $t2 = drupal_substr($term->t2, 0, 10);
+      fwrite($fh, $t1 . ' -> ' . $t2 . "\n");
+    }
+    fclose($fh);
+    
+    // author
+    _visualscience_docgraph_generate_author($path);
+    $VISUALSCIENCE_DOCGRAPH_MIN_REF = $VISUALSCIENCE_DOCGRAPH_MIN_REF_DEFAULT;
+    $VISUALSCIENCE_DOCGRAPH_MAX_REF = $VISUALSCIENCE_DOCGRAPH_MAX_REF_DEFAULT;
+    _visualscience_docgraph_generate_reference($path);
+  }
+}
+
+function _visualscience_docgraph_generate_reference($file_path) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
+  
+  $node_limit = 25;
+  $min_referer_amount = 5;
+  $referer_percent = 0.1;
+  
+  $result = db_query("SELECT paper1.title AS referer, paper1.nid AS referer_id, paper2.title AS referred, paper2.nid AS referred_id
+      FROM {field_data_citation_reference} r, {node} paper2,
+        {node} paper1
+      WHERE paper1.nid = r.entity_id AND paper2.nid = r.citation_reference_target_id;");
+    
+  $map = array();
+  $referred_count = array();
+  $id_to_name_map = array();
+  foreach ($result as $term) {
+    $t1 = drupal_substr($term->referer, 0, 16);
+    $t2 = drupal_substr($term->referred, 0, 16);
+    $id_to_name_map[$t1] = $term->referer_id;
+    $id_to_name_map[$t2] = $term->referred_id;
+    if (array_key_exists($t2, $map)) {
+      $map[$t2][] = $t1;
+    } else {
+      $map[$t2] = array($t1);
+    }
+  }
+  uasort($map, '_visualscience_docgraph_assoc_sort');
+  $map = array_slice($map, 0, $node_limit);
+  $referred_count = array_slice($referred_count, 0, $node_limit);
+//  $referred_names = array_keys($referred_count);
+  
+  
+//  $written = array();
+  $colors = array();
+  
+  
+  $min_len = 1000000;
+  $max_len = 0;
+  foreach ($map as $referred => $referers) {
+    $array_count_values = array_count_values($referers);
+    foreach ($referers as $referer) {
+      $cnt = $array_count_values[$referer];
+      if ($cnt > $max_len) $max_len = $cnt;
+      if ($cnt < $min_len) $min_len = $cnt;
+    }
+  }
+  
+  if ($max_len - $min_len !== 0) {
+    $fh = fopen($file_path . 'reference', "w");
+    foreach ($map as $referred => $referers) {
+      $array_count_values = array_count_values($referers);
+      $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
+
+      foreach ($referers as $referer) {
+        if (rand(1, 100) <= $probability) {
+          $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
+          $referred_node = $referred . " (". count($referers) .")";
+          $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
+
+          $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
+          $color = (strlen($color) < 2 ? "0" . $color : $color);
+  //        dvm($color);
+
+          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+          $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+        }
+      }
+    }
+    fwrite($fh, "\n\n; painting names based on relevance\n");
+    $i = 0;
+    foreach ($colors as $name => $col) {
+      fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+    }
+
+    fclose($fh);
+  }
+}
+
+function _visualscience_docgraph_generate_author($file_path) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
+  
+  $node_limit = 25;
+  $min_referer_amount = 5;
+  $referer_percent = 0.1;
+  
+  $result = db_query("SELECT auth2.title AS referer, auth2.nid AS referer_id, auth1.title AS referred, auth1.nid AS referred_id
+      FROM {field_data_citation_reference} r, {node} auth2,
+        {field_data_author_reference} ar1, {field_data_author_reference} ar2,
+        {node} auth1
+      WHERE ar2.entity_id = r.entity_id AND ar1.entity_id = r.citation_reference_target_id
+        AND ar1.author_reference_target_id = auth1.nid AND ar2.author_reference_target_id = auth2.nid;");
+    
+  $map = array();
+  $referred_count = array();
+  $id_to_name_map = array();
+  foreach ($result as $term) {
+    $t1 = drupal_substr($term->referer, 0, 10);
+    $t2 = drupal_substr($term->referred, 0, 10);
+    $id_to_name_map[$t1] = $term->referer_id;
+    $id_to_name_map[$t2] = $term->referred_id;
+    if (array_key_exists($t2, $map)) {
+      $map[$t2][] = $t1;
+    } else {
+      $map[$t2] = array($t1);
+    }
+  }
+  uasort($map, '_visualscience_docgraph_assoc_sort');
+  $map = array_slice($map, 0, $node_limit);
+  $referred_count = array_slice($referred_count, 0, $node_limit);
+//  $referred_names = array_keys($referred_count);
+  
+  
+//  $written = array();
+  $colors = array();
+  
+  
+  $min_len = 1000000;
+  $max_len = 0;
+  foreach ($map as $referred => $referers) {
+    $array_count_values = array_count_values($referers);
+    foreach ($referers as $referer) {
+      $cnt = $array_count_values[$referer];
+      if ($cnt > $max_len) $max_len = $cnt;
+      if ($cnt < $min_len) $min_len = $cnt;
+    }
+  }
+  if ($max_len - $min_len !== 0) {
+    $fh = fopen($file_path . 'author', "w");
+    foreach ($map as $referred => $referers) {
+      $array_count_values = array_count_values($referers);
+      $probability = (count($referers) < $min_referer_amount ? 1 : $min_referer_amount * 1.0 / count($referers)) * 100;
+
+      foreach ($referers as $referer) {
+        if (rand(1, 100) <= $probability) {
+          $strength = ((count($referers) - $VISUALSCIENCE_DOCGRAPH_MIN_REF) * 1.0 / $VISUALSCIENCE_DOCGRAPH_MAX_REF);
+          $referred_node = $referred . " (". count($referers) .")";
+          $id_to_name_map[$referred_node] = $id_to_name_map[$referred];
+
+          $color = dechex(( ($array_count_values[$referer] - $min_len) / ($max_len - $min_len) ) * 255 );
+          $color = (strlen($color) < 2 ? "0" . $color : $color);
+  //        dvm($color);
+
+          fwrite($fh, $referer . " -> " . $referred_node . " {label: ". $array_count_values[$referer] .", length: ". (20 / ($array_count_values[$referer])) .", color: #". $color ."0000}\n");
+          $colors[$referred_node] = dechex(256 - ($strength * 128 + 127));
+        }
+      }
+    }
+    fwrite($fh, "\n\n; painting names based on relevance\n");
+    $i = 0;
+    foreach ($colors as $name => $col) {
+      fwrite($fh, $name . "{color: #". $col . $col . $col .", id:". $id_to_name_map[$name] ."}\n");
+    }
+
+    fclose($fh);
+  }
+}
+
+function _visualscience_docgraph_assoc_sort($a, $b) {
+  global $VISUALSCIENCE_DOCGRAPH_MIN_REF, $VISUALSCIENCE_DOCGRAPH_MAX_REF;
+  
+  if (count($a) < $VISUALSCIENCE_DOCGRAPH_MIN_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MIN_REF = count($a);
+  }
+  if (count($b) < $VISUALSCIENCE_DOCGRAPH_MIN_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MIN_REF = count($b);
+  }
+  if (count($a) > $VISUALSCIENCE_DOCGRAPH_MAX_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MAX_REF = count($a);
+  }
+  if (count($b) > $VISUALSCIENCE_DOCGRAPH_MAX_REF) {
+    $VISUALSCIENCE_DOCGRAPH_MAX_REF = count($b);
+  }
+  
+  if (count($a) == count($b)) {
+    return 0;
+  }
+  return (count($a) > count($b)) ? -1 : 1;
+}

@@ -1,0 +1,9 @@
+- separate db queries from includes/d2d.requests.inc, rewrite MySQL queries
+- example: add check to only show in menu if initialization is complete
+- wrap all drupal_get_variable and similar method calls in own method
+- d2d_patterns: should not make use of variable_get directly but use api!
+- d2d_patterns seems to have some bugs
+- rename methods and for the moment add old method calls in d2d.deprecated.inc
+- check d2d tests, in particular permissions
+- db queries / access in installation file -> api?
+- make sure db is clean on deinstallation, clean all variables set before

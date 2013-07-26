@@ -1,0 +1,225 @@
+<?php
+
+/**
+ * @file
+ * Installation file for Patterns.
+ */
+
+module_load_include('inc', 'patterns', 'includes/variables');
+module_load_include('inc', 'patterns', 'includes/config');
+module_load_include('inc', 'patterns', 'includes/path');
+module_load_include('inc', 'patterns', 'includes/io/io');
+module_load_include('inc', 'patterns', 'includes/utils');
+
+/**
+ * Implements hook_install().
+ */
+function patterns_install() {
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function patterns_uninstall() {
+  $del = db_delete('variable')
+    ->condition('name', 'patterns_%', 'LIKE')
+    ->execute();
+}
+
+/**
+ * Implements hook_schema().
+ */
+function patterns_schema() {
+
+  $schema['patterns'] = array(
+    'description' => 'Stores patterns information.',
+    'fields' => array(
+      'pid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique pattern ID.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 55,
+        'default' => '',
+        'description' => 'Machine readable name of this pattern.',
+      ),
+      'format' => array(
+        'type' => 'varchar',
+        'length' => 10,
+        'default' => '',
+        'description' => 'Format of the patterns (XML, YAML, etc.).',
+      ),
+      /*
+       * STATUSES:
+       *
+       *    0: installed, not enabled
+       *    1: installed, enabled
+       *
+       *    -1: invalid
+       *    -5: removed
+       */
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Boolean indicating whether the pattern has been executed (enabled).',
+      ),
+      'public' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Boolean indicating whether the pattern is published (available for sharing via patterns server).',
+      ),
+      'file' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Path of the pattern file relative to Drupal root.',
+      ),
+      'updated' => array(
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => '0',
+        'description' => 'The Unix timestamp indicating when the pattern file was last time updated (modified).',
+      ),
+      'enabled' => array(
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => '0',
+        'description' => 'The Unix timestamp indicating when the pattern was last time executed.',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Title of the pattern.',
+      ),
+      'description' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'description' => 'Description of the pattern.',
+      ),
+      'pattern' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+        'description' => 'A serialized array containing pattern code.',
+      ),
+      'uuuid' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'default' => '',
+        'description' => 'Identify patterns and their parent',
+      ),
+      'author' => array(
+          'type' => 'varchar',
+          'length' => 20,
+          'default' => '',
+          'description' => 'pattern\'s author',
+      ),
+    ),
+    'primary key' => array('pid'),
+    'unique keys' => array('name' => array('name'))
+  );
+
+  return $schema;
+}
+/**
+ * Add uuuid and author field to {patterns} table.
+ */
+function patterns_update_7200() {
+  
+  // Add the uuuid field to the db.
+  if (!db_field_exists('patterns', 'uuuid')) {
+    $uuuid = array(
+        'type' => 'varchar',
+        'length' => 50,
+        'default' => '',
+        'description' => 'Identify patterns and their parent',
+    );
+    db_add_field('patterns', 'uuuid', $uuuid);
+  }
+
+  // Add the author field to the db.
+  if (!db_field_exists('patterns', 'author')) {
+    $author = array(
+      'type' => 'varchar',
+      'length' => 20,
+      'default' => '',
+      'description' => 'pattern\'s author',
+    );
+    db_add_field('patterns', 'author', $author);
+  }
+
+}
+
+/**
+ * Implements hook_requirements().
+ *
+ * @param string $phase The phase in which hook_requirements is run (install|runtime).
+ */
+function patterns_requirements($phase) {
+  $requirements = array();
+
+ // Checking if patterns directory is writable
+ // Must be done at installation and runtime
+  if (!_patterns_io_is_patterns_dir_ready(NULL, FILE_CREATE_DIRECTORY)) {
+      $requirements['pdir'] = array(
+        'title'       => t('Patterns files dir writable'),
+        'description' => t("Patterns folder doesn't exist or is not writable: !path", array('!path' => patterns_path_get_files_dir())),
+        'severity'    => REQUIREMENT_WARNING,
+        'value'       => t('Not writable'),
+      );
+    }
+    else {
+      $requirements['pdir'] = array(
+        'title'       => t('Patterns files dir'),
+        'severity'    => REQUIREMENT_OK,
+        'value'       => t('Writable'),
+      );
+    }
+
+  switch ($phase) {
+    case 'runtime':
+      if (!ini_get('allow_url_fopen')) {
+        $requirements['allow_url_fopen'] = array(
+          'title'       => t('Patterns import files from remote URL'),
+          'description' => t('To import patterns directly from remote URL \'allow_url_fopen\' must be enabled in your PHP configuration.'),
+          'severity'    => REQUIREMENT_WARNING,
+          'value'       => t('Disabled'),
+        );
+      }
+      
+      //Trying to detect CodeMirror library
+      $library = libraries_detect('codemirror');
+      if (empty($library['installed'])) {
+        $requirements['codemirror'] = array(
+            'title'       => t('CodeMirror (JavaScript based code editor)'),
+            'description' => t('Patterns editor can be better visualized with CodeMirror. To enable CodeMirror support, download the !codemirror and copy it into the libraries folder (e.g. sites/all/libraries/codemirror/). Error: !error',
+                array('!codemirror' => l(t('library'), 'https://github.com/marijnh/CodeMirror/', array('absolute' => TRUE)), '!error' => $library['error message'])),
+            'severity'    => REQUIREMENT_WARNING,
+            'value'       => t($library['error']),
+        );
+      }else{
+        $requirements['codemirror'] = array(
+            'title'       => t('CodeMirror Library (JavaScript based code editor)'),
+            'severity'    => REQUIREMENT_OK,
+            'value'       => $library['version'],
+        );
+      }
+
+    break;
+  }
+  return $requirements;
+}
+

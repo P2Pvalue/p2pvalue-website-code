@@ -1,0 +1,29 @@
+# YAML Shortcut Pattern
+# QScience
+
+info:
+  title: change qtr parameters
+  description: change qtr parameters
+  author: QScience
+  category: QTR
+  version: 1.0
+  core: 7.x
+  author_email: xrfind@gmail.com
+  author_website: http://qlectives.eu/
+
+actions:
+  - modify:
+      tag: qtr_parameters
+      #qtr_delta: 0.00000000001
+      #qtr_w_vote: 1
+      qtr_w_download: 0.1
+      #qtr_w_view: 0.05
+      #qtr_decay: 0
+      #qtr_tau0: 50
+      #qtr_renorm_q: 0
+      #qtr_renorm_r: 0
+      #qtr_renorm_t: 1
+      #qtr_resc_q: 1
+      #qtr_resc_r: 1
+      #qtr_resc_t: 1
+      xkvldl: 1

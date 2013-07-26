@@ -1,0 +1,122 @@
+<?php
+/**
+ * @file
+ * SimpleTests for the menu component of Patterns.
+ *
+ */
+
+class PatternsMenuTestCase extends PatternsTestCase {
+
+  var $menu_tests_dir;
+
+  static function getInfo() {
+    return array(
+      'name' => 'Menu component',
+      'description' => 'Edit the menu setting of themes',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->menu_tests_dir = $this->getPatternsTestDir() . 'menu/';
+
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+    );
+
+    parent::setUp($modules);
+
+    $this->big_user = $this->drupalCreateUser(array('administer patterns', 'administer menu', 'administer url aliases'));
+    $this->drupalLogin($this->big_user);
+  }
+
+
+  public function test_menu() {
+    module_enable(array('menu')); // TODO: move this to setUp()?
+    $name = 'menu-footer-links';
+    $title = 'Footer Links';
+    $description = 'Menu description.';
+    parent::runFile('menu_create.yaml', 'Create a menu', $this->menu_tests_dir);
+
+    //select db to verify the result is the same as the variable or not
+    $result = db_select('menu_custom', 'm')
+      ->fields('m', array('menu_name', 'title', 'description'))
+      ->condition('m.menu_name', $name)
+      ->condition('m.title', $title)
+      ->condition('m.description', $description)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual($result, 1, t('Menu was created correctly.'));
+
+    // Do menu item operations before modifying or deleting the menu link
+    $this->testing_menu_item();
+
+    //menu modify
+    parent::runFile('menu_modify.yaml', 'Edit a menu', $this->menu_tests_dir);
+    $nameM = 'menu-footer-links';
+    $titleM = 'Footer Links';
+    $descriptionM = 'Menu description changed.';
+    $result = db_select('menu_custom', 'm')
+      ->fields('m', array('menu_name', 'title', 'description'))
+      ->condition('m.menu_name', $nameM)
+      ->condition('m.title', $titleM)
+      ->condition('m.description', $descriptionM)
+      ->execute()->fetchAll();
+
+    $this->assertEqual(count($result), 1, t('Modified menu item found.'));
+
+    //Menu delete use nameM to delete verfication
+    parent::runFile('menu_delete.yaml', 'Delete a menu', $this->menu_tests_dir);
+    $result = db_select('menu_custom', 'm')
+      ->fields('m', array('menu_name', 'title', 'description'))
+      ->condition('m.menu_name', $nameM)
+      ->condition('m.title', $titleM)
+      ->condition('m.description', $descriptionM)
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertEqual($result, 0, 'Menu link was deleted correctly.');
+
+  }
+
+
+  private function testing_menu_item() {
+    $menu_name = 'menu-footer-links';
+    $link_path = 'http://123.com';
+    $link_title = 'menu link title';
+    parent::runFile('menu_item_create.yaml', 'Create menu items', $this->menu_tests_dir);
+    //select db to verify the result is the same as the variable or not
+    $result = db_select('menu_links', 'm')
+      ->fields('m', array('mlid', 'menu_name', 'link_path', 'link_title'))
+      ->condition('m.menu_name', $menu_name)
+      ->condition('m.link_path', $link_path)
+      ->condition('m.link_title', $link_title)
+      ->execute()->fetchAll();
+    $this->assertNotNull($result, t('Menu_item was created correctly.'));
+
+    parent::runFile('menu_item_modify.yaml', 'Edit menu items', $this->menu_tests_dir);
+    $menu_nameM = 'menu-footer-links';
+    $link_pathM = 'http://123.com';
+    $link_titleM = 'menu link title changed';
+    $result = db_select('menu_links', 'm')
+      ->fields('m', array('menu_name', 'link_path', 'link_title'))
+      ->condition('m.menu_name', $menu_nameM)
+      ->condition('m.link_path', $link_pathM)
+      ->condition('m.link_title', $link_titleM)
+      ->execute()->fetchAll();
+    $this->assertTrue($result, t('Menu_item was modified correctly.'));
+
+    //Menu delete use others to delete verfication
+    parent::runFile('menu_item_delete.yaml', 'Delete menu items', $this->menu_tests_dir);
+    $result = db_select('menu_links', 'm')
+      ->fields('m', array('menu_name', 'link_path', 'link_title'))
+      ->condition('m.menu_name', $menu_nameM)
+      ->condition('m.link_path', $link_pathM)
+      ->condition('m.link_title', $link_titleM)
+      ->countQuery()->execute()->fetchField();
+    $this->assertEqual($result, 0, 'Menu_item was deleted correctly.');
+
+  }
+
+}

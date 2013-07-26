@@ -1,0 +1,24 @@
+ # YAML Field Pattern
+# QScience
+
+info:
+  title: Modify field settings
+  description: Modify field settings
+  author: QScience
+  category: Field
+  version: 1.0
+  core: 7.x
+  author_email: nbboob@gmail.com
+  author_website: http://qlectives.eu/
+
+
+actions:
+
+  - modify:
+      tag: field
+      entity: user
+      bundle: user
+      name: sponsor
+      settings:      
+        max_length:100
+

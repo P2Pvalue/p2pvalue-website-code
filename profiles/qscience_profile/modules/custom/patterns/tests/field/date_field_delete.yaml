@@ -1,0 +1,21 @@
+ # YAML Field Pattern
+# QScience
+
+info:
+  title: Delete date fields
+  description: Delete date fields
+  author: QScience
+  category: Field
+  version: 1.0
+  core: 7.x
+  author_email: nbboob@gmail.com
+  author_website: http://qlectives.eu/
+
+
+actions:
+
+  - delete:
+      tag: instance
+      entity_type: node
+      bundle: article
+      name: date

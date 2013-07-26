@@ -1,0 +1,236 @@
+<?php
+/**
+ * @file
+ * SimpleTests for the User component of Patterns.
+ * TODO: permissions.
+ */
+
+class PatternsUserTestCase extends PatternsTestCase {
+
+  var $user_tests_dir;
+
+  static function getInfo() {
+    return array(
+      'name' => 'User component',
+      'description' => 'Testing cases for users, roles, permissions and its relationships',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->user_tests_dir = $this->getPatternsTestDir() . 'user/';
+
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+    );
+
+    parent::setUp($modules);
+  }
+
+  public function testCreateModifyDelete() {
+    $this->testRoleCreate();
+    $this->testRoleModify();
+    $this->testRoleDelete();
+    //@TO-DO: Disable temporarily due to login issue. Ref: http://drupal.org/node/394976
+    //$this->testPermissionModify();
+    //$this->testPermissionModifyUserCreate();
+  }
+
+  
+  /**
+   *
+   * Creates an user, a role and a set of permissions. This case proves the fact
+   * that patterns whose semantic dependencies are manually solved can be run.
+   *
+   */
+  private function testPermissionModifyUserCreate() {
+    $username = 'test_uid_sem_dependencies';
+    $rolename = 'manager_sem_dep';
+    $permissions = array('administer blocks', 'administer image styles', );
+    
+    //Delete user if exists already
+    if (user_load_by_name($username)) {
+      user_delete(user_load_by_name($username)->uid);
+    }
+    
+    //Delete role if exists already
+    if (user_role_load_by_name($rolename)) {
+      user_role_delete($rolename);
+    }
+    
+    //Raise error if user exists already
+    $this->assertFalse(user_load_by_name($username),
+        format_string('Username %username does not exist in the system yet.', array('%username' => $username)));
+    
+    //Raise error if role exists already
+    $this->assertFalse(user_role_load_by_name($rolename),
+        format_string('role %role does not exist in the system yet.', array('%role' => $rolename)));
+    
+    //Run pattern that creates user assign him a role and set the permissions for that role
+    parent::runFile('user_permission_modify_user_create.yaml', 'User, role and permissions', $this->user_tests_dir);
+    //parent::quickRun('user_permission_modify_user_create.yaml', 'User, role and permissions', $this->user_tests_dir, 'yaml', TRUE, 'php');
+    
+    //Raise error if user does not exist now
+    $this->assertTrue(user_load_by_name($username),
+        format_string('Username %username now exists in the system.', array('%username' => $username)));
+    
+    
+    //Raise error if role does not exist now
+    $this->assertTrue(user_role_load_by_name($rolename),
+        format_string('role %role does not exist in the system yet.', array('%role' => $rolename)));
+    
+    //Check also that the new user holds the expected permissions
+    $user = user_load_by_name($username);
+    $debugrole = user_role_load_by_name($rolename);
+    foreach ($permissions as $permission) {
+      $this->assertTrue(user_access($permission, $user),
+          format_string('Permission %p successfully added to the role after running the pattern.', array('%p' => $permission)));
+    }
+    
+}
+  
+  
+  /**
+   * 
+   * Add permissions to administer modules to anonymous user as a test.
+   * It removes explicitely the permission from the user before running the pattern.
+   * 
+   */
+  private function testPermissionModify() {
+    $permission = 'administer themes';
+    $role_name = 'administrator';
+    $role = user_role_load_by_name($role_name);
+    $role_list = array($role->rid => $role->name);
+
+    $ur = user_role_permissions($role_list);
+    $cond = array_key_exists($permission, $ur[$role->rid]);
+    $this->verbose(format_string('Does it have the role before executing the tentative removal?: %cond', array ('%cond'=> $cond)));
+    debug($cond);
+    debug($ur);
+    //Remove the permission to administer modules in case they have it.
+    if (array_key_exists($permission, $ur[$role->rid])) {
+      user_role_revoke_permissions($role->rid, array($permission));
+    }
+    
+
+    cache_clear_all();
+    $ur = user_role_permissions($role_list);
+    $cond = array_key_exists($permission, $ur[$role->rid]);
+    $this->verbose(format_string('Does it have the role before executing the pattern?: %cond', array ('%cond'=> $cond)));
+    debug($cond);
+    debug($ur);
+    $this->assertFalse(array_key_exists($permission, $ur[$role->rid]), 
+        format_string('Permission %p successfully removed manually to the role.', array('%p' => $permission)));
+
+    //Run the pattern that adds the permission
+    parent::runFile('user_permission_modify.yaml', 'Permissions (modify)', $this->user_tests_dir);
+
+    $ur = user_role_permissions($role_list);
+    $cond = array_key_exists($permission, $ur[$role->rid]);
+    $this->verbose(format_string('Does it have the role after executing the pattern?: %cond', array ('%cond'=> $cond)));
+    debug($cond);
+    debug($ur);
+    //Check if the user currently holds the permission after running the pattern
+    $this->assertTrue(array_key_exists($permission, $ur[$role->rid]),
+        format_string('Permission %p successfully added to the role after running the pattern.', array('%p' => $permission)));
+  }
+
+  private function arrayEquals($a, $b) {
+    sort($a);
+    sort($b);
+    return $a == $b;
+  }
+
+
+  private function testRoleCreate() {
+    // The role should not exist at this point.
+    $role_count = db_select('role', 'r')
+      ->fields('r', array('rid'))
+      ->condition('name', 'test_role')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($role_count, '0', t('The role should not exist at this point.'));
+
+    // Run the pattern.
+    parent::runFile('user_role_create.yaml', 'Role (create)', $this->user_tests_dir);
+
+    $this->assertUniqueText(t('The role has been added.'));
+
+    $role_count = db_select('role', 'r')
+      ->fields('r', array('name'))
+      ->condition('name', 'test_role')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($role_count, '1', t('The test role should exist at this point.'));
+
+    //$this->testPermissionCreate();
+  }
+
+  private function testRoleModify() {
+    // Run the pattern.
+    parent::runFile('user_role_modify.yaml', 'Role (modify)', $this->user_tests_dir);
+
+    // The role should exist with the modified values. We assume the rid as 4, since at least one role will have been created
+    $role_count = db_select('role', 'r')
+      ->fields('r', array('name'))
+      ->condition('name', 'test_role_mod')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($role_count, '1', t('The role should exist with the modified values.'));
+    //$this->testPermissionModify();
+    //$this->testPermissionDelete();
+  }
+
+  private function testRoleDelete() {
+    // Run the pattern.
+    parent::runFile('user_role_delete.yaml', 'Role (delete)', $this->user_tests_dir);
+
+    // The role should not exist at this point. We assume the rid as 4, since at least one role will have been created
+    $role_count = db_select('role', 'r')
+      ->fields('r', array('name'))
+      ->condition('name', 'test_role_mod')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($role_count, '0', t('The role should not exist at this point.'));
+  }
+
+  private function testUserCreate() {
+    // The user should not exist at this point.
+
+    $user_count = db_select('users', 'u')
+      ->fields('u', array('uid'))
+      ->condition('name', 'test_uid')
+      ->countQuery()->execute()->fetchField();
+
+    $this->assertIdentical($user_count, '0', t('The user should not exist at this point.'));
+
+    // Run the pattern.
+    parent::runFile('user_create.yaml', 'Users (create)', $this->user_tests_dir);
+
+    // Expected messages.
+    $this->assertUniqueText(t('Created a new user account for test_uid.'));
+
+    // The user should exist with the right values.
+    $user = db_select('users', 'u')
+      ->fields('u', array('uid'))
+      ->condition('name', 'test_uid')
+      ->countQuery()->execute()->fetchField();
+    $this->verbose('usercount: ' . $user);
+    $this->assertIdentical($user, 1, t('The test user should exist at this point.'));
+    // TODO: Check fields.
+  }
+
+  private function testUserDelete() {
+    // Run the pattern.
+    parent::runFile('user_delete.yaml', 'Users (delete)', $this->user_tests_dir);
+
+    // Expected messages.
+    $this->assertUniqueText(t('')); // TODO
+
+    // The user should not exist at this point.
+    $user_count = db_select('users', 'u')
+      ->fields('u', array('uid'))
+      ->condition('uid', 'test_uid')
+      ->countQuery()->execute()->fetchField();
+    $this->assertIdentical($user_count, '0', t('The user should not exist at this point.'));
+  }
+
+}

@@ -1,0 +1,7 @@
+name = VisualScience - Document Graphs
+description = Displays some interesting graphs about documents and their connections.
+dependencies[] = qscience
+
+core = 7.x
+version = 7.x-1.x-dev
+package = QScience

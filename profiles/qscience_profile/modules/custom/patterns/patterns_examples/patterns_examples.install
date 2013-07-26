@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * @file
+ * Installation file for Patterns.
+ */
+
+module_load_include('inc', 'patterns', 'includes/variables');
+module_load_include('inc', 'patterns', 'includes/config');
+module_load_include('inc', 'patterns', 'includes/path');
+module_load_include('inc', 'patterns', 'includes/io');
+
+/**
+ * Implements hook_install().
+ */
+function patterns_examples_install() {}
+
+/**
+ * Implements hook_uninstall().
+ */
+function patterns_examples_disable() {
+  $example_path = drupal_get_path('module', 'patterns_examples'); 
+  $ps = patterns_db_get_patterns();
+  foreach ($ps as $p) { 
+  	if (strpos($p->file, $example_path) !== FALSE) {  
+  		patterns_db_remove_pattern($p->pid);	
+  	}
+  }
+  
+}
+
+

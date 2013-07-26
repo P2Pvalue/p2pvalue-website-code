@@ -1,0 +1,17 @@
+<div align="center" style="max-width:25%;" class="action-bar-container" id="action-bar-container{{idOfThisTab}}">
+	<div id="actionBar{{idOfThisTab}}" class="action-bar">
+		<h4>Actions<span class="small-addition-in-title">to selected users</span></h4>
+		<h5 onClick="vsInterface.createTab('message', {{idOfThisTab}});" class="clickable vs-button"  title="Send a message to the selected people from the list">
+			<img src="{{installFolder}}/images/message.png" alt="Icon for Messages" />
+		</h5>
+		<h5 onClick="vsInterface.createTab('csv', {{idOfThisTab}});" class="clickable vs-button" title="Export the selected users and their informations into a CSV file">
+			<img src="{{installFolder}}/images/csv.png" alt="Icon for CSV" />
+		</h5>
+		<h5 onClick="vsInterface.createTab('livingscience', {{idOfThisTab}});" class="clickable vs-button" title="Make a LivingScience Search about the users">
+			<img src="{{installFolder}}/images/earth.png" alt="Icon for LivingScience" />
+		</h5>
+		<h5 style="display:none;" onClick="vsInterface.createTab('conference', {{idOfThisTab}});" class="clickable vs-button" title="Schedule a conference for the selected people">
+			<img src="{{installFolder}}/images/conference.png" alt="Icon for Conference" />
+		</h5>
+	</div>
+</div>

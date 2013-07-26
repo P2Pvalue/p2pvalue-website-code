@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * Implements hook_patterns_components().
+ *
+ * Tell the Patterns engine where the components are.
+ */
+function patterns_patterns_components() {
+  return drupal_get_path('module', 'patterns_components') . '/components/';
+}
+
+/**
+ * 
+ * Auxiliar function that can be used by the components to check if the action
+ * has all the expected mandatory values.
+ * 
+ * @param array $attributes  List of attributes in the current action
+ * @param array $mandatory_attributes  List of expected mandatory attributes
+ * @param string $msg  Message that will be promted to the user
+ * @return boolean  Returns TRUE if all the $mandatory_attributes are found in $attributes, FALSE otherwise
+ * 
+ * @TO-DO: Find a cleaner way to input the <br>
+ */
+function _patterns_has_all_mandatory_attributes($attributes, $mandatory_attributes, &$msg) {
+  $result = TRUE;
+  foreach ($mandatory_attributes as $att){
+    if (!array_key_exists($att, $attributes)) {
+      $msg .= t('Mandatory attribute %att could not be found.<br>', array('%att' =>$att,));
+      $result = FALSE;
+    }
+  }
+  return $result;
+}
+
+
+/**
+ * 
+ * Auxiliar function that can be used by the components to check if the action has
+ * any attributes that will not be interpretable.
+ * 
+ * @param array $attributes  List of attributes in the current action
+ * @param array $interpretable_attributes  List attributes interpretable for the component for this case
+ * @param string $msg  Message that will be promted to the user
+ * @return boolean  Returns TRUE if any uninterpreatable attributes is found, FALSE otherwise
+ * 
+ * @TO-DO: Find a cleaner way to input the <br>
+ */
+function _patterns_has_uninterpretable_attributes($attributes, $interpretable_attributes, &$msg) {
+	$result = FALSE;
+  foreach ($attributes as $att => $value) {
+    if (!in_array($att, $interpretable_attributes)) {
+      $msg .= t('Attribute %att cannot be interpreted by the component.<br>', array('%att' =>$att,));
+      $result = TRUE;
+    }
+  }
+  return $result; 
+}

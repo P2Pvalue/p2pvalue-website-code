@@ -1,0 +1,548 @@
+<?php
+
+/**
+ *
+ * @file
+ * This module is for uploading a pdf journal then a remote server parses its
+ * content. PDF's could be uploaded locally or it is allowed to give an url
+ * which links to a pdf.
+ *
+ */
+
+function pdfparser_paper_uploaded($file) {
+  send_pdf_to_server($file->destination);
+}
+
+function pdfparser_menu() {
+  $items = array();
+
+  $items['admin/pdfparser'] = array(
+    'title' => 'PDF Parser',
+    'description' => 'PDF parser',
+    'page callback' => 'pdfparser_settings',
+    'access arguments' => array(TRUE),
+  );
+
+  $items['admin/pdfparser/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -9,
+  );
+
+  $items['admin/pdfparser/list'] = array(
+    'title' => 'List parsed PDFs',
+    'description' => 'List of parsed datas',
+    'page callback' => 'pdfparser_parsedlist',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array(TRUE),
+    'weight' => -8,
+  );
+
+  return $items;
+}
+
+function pdfparser_parsedlist() {
+  $public = _pdfparser_get_public_path();
+  $parsed = $public . variable_get('pdfparser_parsed_pdf_path');
+
+  $scan = file_scan_directory($parsed, '/.*/' );
+  $files = array();
+  foreach ($scan as $key => $val) {
+    $files[] = $val->filename;
+  }
+  $variables = array();
+  $variables['items'] = $files;
+  $variables['title'] = 'Parsed pdf files';
+  $variables['type'] = 'ul';
+  $variables['attributes'] = array();
+
+  return theme_item_list($variables);
+}
+
+function _pdfparser_get_public_path() {
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  return $public_uri;
+}
+
+function pdfparser_settings() {
+  $form = drupal_get_form('pdfparser_settings_form');
+  return drupal_render($form);
+}
+
+function pdfparser_form_paper_node_form_alter(&$form, &$form_state, $form_id) {
+  _pdfparser_paper_node_form_alter($form);
+}
+
+function pdfparser_settings_form() {
+
+  $form['server_url'] = array(
+    '#type' => 'textfield',
+    '#title' => 'The server URL',
+    '#value' => variable_get('pdfparser_server_url'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send my public key to server'),
+  );
+  return $form;
+}
+
+function pdfparser_settings_form_validate($form_id, &$form_values) {
+  $url = $form_values['input']['server_url'];
+  $file_headers = @get_headers($url);
+  if ($file_headers === FALSE || $file_headers[0] == 'HTTP/1.1 404 Not Found') {
+    form_set_error('server_url', t('Invalid url, please check again.'));
+  }
+}
+
+function pdfparser_settings_form_submit($form_id, &$form_values) {
+  $public = _pdfparser_get_public_path();
+  $url = $form_values['input']['server_url'];
+  variable_set('pdfparser_server_url', $url);
+  $file = $public . variable_get('pdfparser_public_key_path') . 'public_key';
+  $post = new stdClass();
+  $post->func = 'set_public_key';
+  $post->ip = $_SERVER['SERVER_ADDR'];
+  $post->public_key = base64_encode(file_get_contents($file));
+
+  $ret_pure = do_post_request2($url, json_encode($post));
+  $ret = json_decode($ret_pure);
+  $pdf_parser_link = l('PDFparser settings', 'admin/pdfparser');
+  if (isset($ret->result)) {
+    if ($ret->result === 0) {
+      drupal_set_message(t('Public key saved succesfully.'));
+    }
+    elseif ($ret->result === 1) {
+      drupal_set_message(t('Cannot save public key at server side. Maybe there is no permission to do that.'), 'error');
+//      dvm($ret_pure);
+    }
+    else {
+      drupal_set_message(t('Invalid server address.'), 'error');
+    }
+  }
+  else {
+    drupal_set_message(t("Unrecognized message from server.
+      Please check again your server's URL at $pdf_parser_link menu ."), 'error');
+    drupal_set_message(check_plain($ret_pure), 'error');
+  }
+}
+
+function send_pdf_to_server($file) {
+  $signature = '';
+  $content = file_get_contents($file);
+  $content_length = filesize($file);
+  $crypted_hash = NULL;
+  $private_key = variable_get('pdfparser_private_key');
+  $sign = openssl_sign($content, $crypted_hash, $private_key);
+  if ($sign) {
+    $signature = base64_encode($crypted_hash);
+  }
+  else {
+    drupal_set_message(t('Signaturing failed'), 'error');
+  }
+  $post = array(
+    'func' => 'send_pdf_to_parse',
+    'signature' => $signature,
+    'ip' => $_SERVER['SERVER_ADDR'],
+    'file' => base64_encode($content),
+    'filename' => basename($file)
+  );
+
+  $url = variable_get('pdfparser_server_url');
+  $start = microtime(TRUE);
+  $ret_pure = do_post_request2($url, json_encode($post));
+  $total_process_time = microtime(TRUE) - $start;
+  $ret = json_decode($ret_pure);
+  $pdf_parser_link = l('PDFparser settings', 'admin/pdfparser');
+  if (isset($ret->result)) {
+    if ($ret->result === 0) {
+      drupal_set_message(t('PDF parsed successfully at remote server.'));
+      pdfparser_store_xml($ret->xml_name, base64_decode($ret->xml_citations), base64_decode($ret->xml_header),
+              base64_decode($ret->authors), $content_length);
+//      drupal_set_message(t("Time of parsing: :time seconds<br/>(all script: :all_script<br/>java: :java sec<br/>perl cit: :pcit sec<br/>perl head :phead sec<br/>python: :python sec)",
+//        array(
+//          ':time' => number_format($total_process_time, 2, ',', ''),
+//          ':all_script' => number_format($ret->ellapse, 2, ',', ''),
+//          ':java' => number_format($ret->javarun, 2, ',', ''),
+//          ':pcit' => number_format($ret->perl_cit, 2, ',', ''),
+//          ':phead' => number_format($ret->perl_head, 2, ',', ''),
+//          ':python' => number_format($ret->python, 2, ',', ''),
+//        )
+//      ));
+      drupal_set_message(t('Time of total process :time seconds', array(':time' => number_format($total_process_time, 2, ',', ''))));
+    }
+    elseif ($ret->result === 1) {
+      drupal_set_message(t("Incorrect public key. Please upload your public key again from <a href=\"@url\">PDFparser settings</a>.", array('@url' => url('admin/pdfparser'))), 'error');
+    }
+    elseif ($ret->result === 2) {
+      drupal_set_message(t('Error on uploading.'), 'error');
+    }
+    elseif ($ret->result === 3) {
+      drupal_set_message(t("There is no public key uploaded from your server yet. Please upload it from <a href=\"@url\">PDFparser settings</a>.", array('@url' => url('admin/pdfparser'))), 'error');
+    }
+    elseif ($ret->result === 5) {
+      drupal_set_message(t("Cannot convert pdf to txt."), 'error');
+    }
+    else {
+      drupal_set_message(t("Unknown error. Please upload your public key again from <a href=\"@url\">PDFparser settings</a> menu.", array('@url' => url('admin/pdfparser'))), 'error');
+    }
+  }
+  else {
+    drupal_set_message(t("Unrecognized message from server.
+      Please check again your server's URL at <a href=\"@url\">PDFparser settings</a> menu.", array('@url' => url('admin/pdfparser'))), 'error');
+    drupal_set_message(t("%pure_data", array('%pure_data' => $ret_pure)), 'error');
+  }
+}
+
+function pdfparser_store_xml($xml_name, $xml_citations, $xml_header, $authors, $pdf_filesize) {
+
+  _save_file($xml_name, $xml_citations, 'citations');
+  _save_file($xml_name, $xml_citations, 'header');
+  //pdfparser_push_to_db($xml_name, $xml_content);
+
+  $tags_to_collect = array('title', 'author', 'abstract');
+  $obj = new stdClass();
+  $obj->title = FALSE;
+  $obj->authors = array();
+  $obj->citations = array();
+  $obj->abstract = FALSE;
+  $obj->authors = explode("\n", $authors);
+
+  $citation_num = -1;
+
+  $maxAbstractConfidence = 0.0;
+  $maxTitleConfidence = 0.0;
+
+  pdfparser_xml_to_array(new SimpleXMLElement($xml_citations), $obj, $tags_to_collect, 0, FALSE, $citation_num, $maxAbstractConfidence, $maxTitleConfidence);
+  pdfparser_xml_to_array(new SimpleXMLElement($xml_header), $obj, $tags_to_collect, 0, FALSE, $citation_num, $maxAbstractConfidence, $maxTitleConfidence);
+
+  for ($i = 0; $i < count($obj->citations); ) {
+    if (!isset($obj->citations[$i]->title)) {
+      array_splice($obj->citations, $i, 1);
+    }
+    else {
+      $i++;
+    }
+  }
+
+  for ($i = 0; $i < count($obj->authors); ) {
+    if (drupal_strlen(trim($obj->authors[$i])) == 0) {
+      array_splice($obj->authors, $i, 1);
+    }
+    else {
+      $i++;
+    }
+  }
+
+  pdfparser_change_paper_upload_form_content_with_js($obj);
+}
+
+function _save_file($file_name, $xml, $type) {
+  if (drupal_strlen($xml) === 0) {
+    return;
+  }
+
+  $public = _pdfparser_get_public_path();
+  $parsed_path = $public . variable_get('pdfparser_parsed_pdf_path');
+  //dvm($parsed_path);
+  if (is_dir($parsed_path)) {
+    $f = @fopen($parsed_path . $file_name . '.' . $type, 'w');
+    if ($f === FALSE) {
+      drupal_set_message(
+        t(
+          'Unable to save the result file :filename. The permission on folder :folder is: :perm. Please check the folder and change the permission in order to save the result files.',
+          array(
+            ':perm' => drupal_substr(sprintf('%o', fileperms($parsed_path)), -4),
+            ':filename' => $file_name . '.' . $type,
+            ':folder' => $parsed_path,
+          )
+        ),
+        'error'
+      );
+    }
+    else {
+      fwrite($f, $xml);
+      fclose($f);
+    }
+  }
+  else {
+    drupal_set_message(t('The directory :dir does not exists. Please create it in order to save the result files.',
+        array(':dir' => $parsed_path)), 'error');
+  }
+}
+
+/**
+ * This function (or a function like this) should handle the parser result.
+ * @param type $obj
+ */
+function pdfparser_change_paper_upload_form_content_with_js($obj) {
+  global $language;
+  
+  drupal_add_js(
+    array(
+      'pdfparser' => array(
+        'title' => $obj->title,
+        'abstr' => $obj->abstract,
+        'authors' => $obj->authors,
+        'citations' => $obj->citations
+        
+      )
+    ),
+    'setting');
+}
+
+function pdfparser_xml_to_array($xml, &$obj, &$tags_to_collect, $level, $citation, &$citation_num, &$maxAbstractConfidence, &$maxTitleConfidence) {
+  $node_name = $xml->getName();
+
+  $confidence = 0.0;
+  $attr = $xml->attributes();
+  if (isset($attr['confidence'])) {
+    $confidence = (double)$attr['confidence'];
+  }
+
+
+  if ($node_name == 'citationList') {
+    $citation = TRUE;
+  }
+
+  if ($citation) {
+    if ($node_name == 'citation') {
+      $citation_num++;
+    }
+  }
+  if (in_array($node_name, $tags_to_collect)) {
+    if ($citation === FALSE) {
+      if ($node_name == 'title') {
+        if ($confidence > $maxTitleConfidence) {
+          $obj->title = (string)$xml;
+          $maxTitleConfidence = $confidence;
+        }
+      }
+      elseif ($node_name == 'abstract') {
+        if ($confidence > $maxAbstractConfidence) {
+          $obj->abstract = (string)$xml;
+          $maxAbstractConfidence = $confidence;
+        }
+      }
+    }
+    else {
+      if (!isset($obj->citations[$citation_num]) && ($node_name == 'author' || $node_name == 'title')) {
+        $obj->citations[$citation_num] = new stdClass();
+      }
+      if ($node_name == 'author') {
+        $obj->citations[$citation_num]->authors[] = (string)$xml;
+      }
+      elseif ($node_name == 'title') {
+        $obj->citations[$citation_num]->title = (string)$xml;
+      }
+    }
+  }
+
+  foreach ($xml->children() as $ch_name => $ch_node) {
+    pdfparser_xml_to_array($ch_node, $obj, $tags_to_collect, $level + 1, $citation, $citation_num, $maxAbstractConfidence, $maxTitleConfidence);
+  }
+}
+
+function do_post_request2($url, $json) {
+  $data = "";
+  $boundary = drupal_substr(md5(rand(0, 32000)), 0, 10);
+  // POSTing JSON data
+  $data .= '--' . $boundary . "\n";
+  $data .= 'Content-Disposition: form-data; name="json"' . "\n";
+  $data .= 'Content-type: application/json' . "\n\n";
+  $data .= $json . "\n";
+
+  $data .= "--$boundary--\n";
+
+  // compiling the post request
+  $params = array(
+    'http' => array(
+      'method' => 'POST',
+      'header' => 'Content-Type: multipart/form-data; boundary=' . $boundary,
+      'content' => $data
+    )
+  );
+  $ctx = stream_context_create($params);
+  $fp = fopen($url, 'rb', FALSE, $ctx);
+  if (!$fp) {
+    throw new Exception("Problem with $url, $php_errormsg");
+  }
+  $response = @stream_get_contents($fp);
+  if ($response === FALSE) {
+    throw new Exception("Problem reading data from $url, $php_errormsg");
+  }
+  return $response;
+}
+
+function pdfparser_paper_form_validate(&$form, &$form_state) {
+  if (isset($form_state['input']['author_reference'])) {
+    $i = 0;
+    foreach ($form_state['input']['author_reference']['extracted'] as $key => $citation) {
+      if (is_numeric($key)) {
+        $div = array(
+          '#prefix' => '<div class="author_row">',
+          '#suffix' => '</div>'
+        );
+
+        $div['name'] = array(
+          '#type' => 'textfield',
+          '#attributes' => array(
+            'class' => array('author_name'),
+            'readonly' => 'readonly',
+          ),
+          '#name' => 'author_reference[extracted][' . $i . '][name]',
+          '#value' => $citation['name'],
+        );
+
+        $div['remove'] = array(
+          '#markup' => '<span class="remove_button author">' . t('Edit') . '</span>',
+        );
+        $form['extracted_authors'][] = $div;
+        $i++;
+      }
+    }
+  }
+
+  if (isset($form_state['input']['citation_reference'])) {
+    $i = 0;
+    foreach ($form_state['input']['citation_reference']['extracted'] as $key => $citation) {
+      if (is_numeric($key)) {
+        $div = array(
+          '#prefix' => '<div class="citation_row">',
+          '#suffix' => '</div>'
+        );
+
+        $div['name'] = array(
+          '#type' => 'textfield',
+          '#attributes' => array(
+            'class' => array('citation'),
+            'readonly' => 'readonly',
+          ),
+          '#name' => 'citation_reference[extracted][' . $i . '][name]',
+          '#value' => $citation['name'],
+        );
+
+        $div['remove'] = array(
+          '#markup' => '<span class="remove_button citation">' . t('Edit') . '</span>',
+        );
+        $form['extracted_citations'][] = $div;
+        $i++;
+      }
+    }
+  }
+}
+
+function pdfparser_node_validate($node, &$form, &$form_state) {
+  if ($node->type === 'paper') {
+    _pdfparser_paper_node_form_alter($form);
+  }
+}
+
+function pdfparser_node_submit($node, $form, &$form_state) {
+//  dvm($node);
+  $language = $form_state['values']['language'];
+  if ($form['#id'] == 'paper-node-form') {
+    if (isset($form_state['input']['author_reference'])) {
+      $i = 0;
+      foreach ($form_state['input']['author_reference']['extracted'] as $key => $author) {
+        if (is_numeric($key)) {
+          $form_state['values']['author_reference'][$language][] = array(
+            'target_id' => array(
+              'title' => $author['name']
+            )
+          );
+        }
+      }
+    }
+
+    if (isset($form_state['input']['citation_reference'])) {
+      $i = 0;
+      foreach ($form_state['input']['citation_reference']['extracted'] as $key => $citation) {
+        if (is_numeric($key)) {
+          $form_state['values']['citation_reference'][$language][] = array(
+            'target_id' => array(
+              'title' => $citation['name']
+            )
+          );
+        }
+      }
+    }
+  }
+}
+
+function _pdfparser_paper_node_form_alter(&$form) {
+  drupal_add_js(drupal_get_path('module', 'pdfparser') . '/js/pdfparser.js', 'file');
+  drupal_add_css(drupal_get_path('module', 'pdfparser') . '/css/pdfparser.css', array('group' => CSS_DEFAULT, 'type' => 'file'));
+
+  $lang = $form['field_paper_upload']['#language'];
+  $desc = $form['field_paper_upload'][$lang][0]['#description'];
+  $desc = explode("<br />", $desc);
+  $desc[0] = $desc[0] . ' ' . t('After uploading, the document will be parsed which will try to fill out your fields, so please hold on for a while. This should take only a few seconds.');
+  $form['field_paper_upload'][$lang][0]['#description'] = implode("<br />", $desc);
+
+  $form['#validate'][] = 'pdfparser_paper_form_validate';
+//  $form['#submit'][] = 'pdfparser_paper_form_submit';
+
+  $form['extracted_authors'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Extracted authors'),
+    '#weight' => 4,
+    '#attributes' => array(
+      'class' => array('extracted_authors'),
+    )
+  );
+
+  $div = array(
+    '#prefix' => '<div class="author_row prototype">',
+    '#suffix' => '</div>'
+  );
+
+  $div['name'] = array(
+    '#type' => 'textfield',
+    '#attributes' => array(
+      'class' => array('author_name'),
+      'readonly' => 'readonly',
+    ),
+    '#name' => 'author_reference[extracted][p][name]'
+  );
+
+  $div['remove'] = array(
+    '#markup' => '<span class="remove_button author">' . t('Edit') . '</span>',
+  );
+
+  $form['extracted_authors'][] = $div;
+
+  // citations
+  $form['extracted_citations'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Extracted references'),
+    '#weight' => 8,
+    '#attributes' => array(
+      'class' => array('extracted_citations'),
+    )
+  );
+
+  $div = array(
+    '#prefix' => '<div class="citation_row prototype">',
+    '#suffix' => '</div>'
+  );
+
+  $div['name'] = array(
+    '#type' => 'textfield',
+    '#attributes' => array(
+      'class' => array('citation'),
+      'readonly' => 'readonly',
+    ),
+    '#name' => 'citation_reference[extracted][p][name]'
+  );
+
+  $div['remove'] = array(
+    '#markup' => '<span class="remove_button citation">' . t('Edit') . '</span>',
+  );
+
+  $form['extracted_citations'][] = $div;
+}

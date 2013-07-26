@@ -1,0 +1,407 @@
+<?php
+/*
+ * @file
+ * qtr module
+ */
+
+require_once 'qtr.inc';
+require_once 'qtr.api.inc';
+
+function qtr_menu() {
+  $items = array();
+
+
+/* $items['qtr/demo'] = array(
+    'title' => 'QTR demonstration',
+    'description' => 'Running QTR on sample data',
+    'page callback' => 'qtr_demo',
+    'access arguments' => array('administer QTR'),
+  );*/
+
+  $items['admin/config/user-interface/qtr'] = array(
+    'title' => 'QTR',
+    'description' => 'QTR settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('qtr_run_form'),
+    'access arguments' => array('administer QTR'),
+  );
+   $items['admin/config/user-interface/qtr/run'] = array(
+    'title' => 'Run',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10
+  );
+  $items['admin/config/user-interface/qtr/Parameters'] = array(
+    'title' => 'Parameters',
+     'page callback' => 'drupal_get_form',
+    'page arguments' => array('qtr_settings'),
+    'access arguments' => array('administer QTR'),
+     'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/user-interface/qtr/item'] = array(
+    'title' => 'Item',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('qtr_set_form'),
+    'access arguments' => array('administer QTR'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function qtr_permission() {
+    return array(
+        //  'access QTR demonstration' => array('title' => t('Access QTR demonstration')),
+        'administer QTR' => array('title' => t('Administer QTR')),
+    );
+}
+
+function qtr_run_form($form, &$form_state) {
+  $form['description'] = array(
+    '#markup' => '<p>' . t('You can specify !cron frequency to run the QTR. Click the button run now:', 
+      array('!cron' => l(t('cron'), 'admin/config/system/cron'))) . '</p>',
+  );
+  $form['run'] = array(
+    '#type' => 'submit',
+    '#value' => t('Run QTR'),
+    '#submit' => array('qtr_demo'),
+  );
+  return $form;
+}
+
+function qtr_set_form($form, &$form_state) {
+  $form= array();
+  $posttype = array();
+  $default = array();
+  $types=qtr_get_itemtype();
+  if ($types) {
+    foreach ($types as $type) {
+      $default[]=$type->item_type;
+    }
+  }
+    foreach (node_type_get_types() as $type => $type_obj) {
+        $posttype[$type] = $type_obj->name;
+    }
+    $form['content_type'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Content type to be considered:'),
+        '#options' => $posttype,
+        '#default_value' => $default,
+    );
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
+    );
+    return $form;
+}
+
+function qtr_set_form_submit($form, &$form_state) {
+    $result = array();
+    $types = $form_state['values']['content_type'];
+    foreach ($types as $type) {
+        if ($type)
+            $result[] = array('item_type' => $type);
+    }
+    qtr_update_itemtype($result);
+    drupal_set_message(t('The settings have been saved.'));
+}
+
+function qtr_settings($form, &$form_state) {
+
+    $form['params'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Parameters'),
+        '#collapsible' => FALSE,
+        '#collapsed' => FALSE,
+    );
+
+    $form['params']['qtr_delta'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Delta'),
+        '#description' => t('N.B.: if the effective number of AGENTS/ITEMS is lower (i.e. if there are gaps in the input file), the renormalization of the algorithm has to change. Better to have no gaps!'),
+        '#default_value' => variable_get('qtr_delta', 0.00000000001),
+    );
+
+    $actions = qtr_get_actiontype();
+    if ($actions) {
+        foreach ($actions as $action) {
+            $form['params']['qtr_w_' . $action->action] = array(
+                '#type' => 'textfield',
+                '#title' => t('Weight of %action action', array('%action' => $action->action)),
+                '#default_value' => $action->weight,
+            );
+        }
+    }
+
+    $form['params']['qtr_decay'] = array(
+        '#type' => 'select',
+        '#title' => t('Time-decay of scores'),
+        '#options' => array(0 => 'no decay', 1 => 'power-decay', 2 => 'exponential decay', 3 => 'theta-decay'),
+        '#default_value' => variable_get('qtr_decay', 0),
+    );
+
+    $form['params']['qtr_tau0'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Time scale of the decay (day)'),
+        '#default_value' => variable_get('qtr_tau0', 50),
+    );
+
+    $form['params']['qtr_renorm_q'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Renormalization of quality'),
+        '#default_value' => variable_get('qtr_renorm_q', 0),
+    );
+
+    $form['params']['qtr_renorm_r'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Renormalization of reputation'),
+        '#default_value' => variable_get('qtr_renorm_r', 0),
+    );
+
+    $form['params']['qtr_renorm_t'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Renormalization of trust'),
+        '#default_value' => variable_get('qtr_renorm_t', 0),
+    );
+
+    $form['params']['qtr_resc_q'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Rescaled quality'),
+        '#default_value' => variable_get('qtr_resc_q', 0),
+    );
+
+    $form['params']['qtr_resc_r'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Rescaled reputation'),
+        '#default_value' => variable_get('qtr_resc_r', 0),
+    );
+
+    $form['params']['qtr_resc_t'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Rescaled trust'),
+        '#default_value' => variable_get('qtr_resc_t', 0),
+    );
+
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save'),
+    );
+    return $form;
+}
+
+function qtr_settings_submit($form, &$form_state) {
+    $params = $form_state['values'];
+    variable_set('qtr_delta', $params['qtr_delta']);
+    variable_set('qtr_decay', $params['qtr_decay']);
+    variable_set('qtr_tau0', $params['qtr_tau0']);
+    variable_set('qtr_renorm_q', $params['qtr_renorm_q']);
+    variable_set('qtr_renorm_r', $params['qtr_renorm_r']);
+    variable_set('qtr_renorm_t', $params['qtr_renorm_t']);
+    variable_set('qtr_resc_q', $params['qtr_resc_q']);
+    variable_set('qtr_resc_r', $params['qtr_resc_t']);
+    variable_set('qtr_resc_t', $params['qtr_resc_t']);
+    $actions = qtr_get_actiontype();
+    if ($actions) {
+        foreach ($actions as $action) {
+            qtr_update_actionweight($action->action, $params['qtr_w_' . $action->action]);
+        }
+    }
+    drupal_set_message(t('The settings have been saved.'));
+}
+
+function qtr_demo() {
+    qtr_from_db();
+    return '';
+}
+
+function qtr_from_db($trust = NULL) {
+  $agent = $item = NULL;
+ // _qtr_init($agent, $item, 50, 1000);
+  _qtr_read($agent, $item, $trust);
+  $start = strtotime('now');
+  if (count($agent)&&count($item)) {
+    _qtr_calculate($agent, $item, $trust, $start);
+    qtr_write_values('qtr_reputation', $agent);
+    qtr_write_values('qtr_quality', $item);
+  }
+  
+  //write the result of reputation of user and quality of paper into files
+  //$path_agents = drupal_get_path('module', 'qtr') . "/agent_file";
+  //$path_items = drupal_get_path('module', 'qtr') . "/item_file";
+  
+  //_qtr_save($agent, $item, $path_agents,$path_items);
+}
+
+/*
+ * Implemens hook_block_info
+ */
+
+function qtr_block_info() {
+    $blocks['popular'] = array(
+        'info' => t('Highlighted contents'),
+        'region' => 'sidebar_first',
+        'status' => TRUE
+    );
+    return $blocks;
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function qtr_init() {
+  //$_moduleName_='user_block';
+  //drupal_add_css(drupal_get_path('module', $_moduleName_) . '/' . $_moduleName_  . '.css');
+  drupal_add_css(drupal_get_path('module', 'qtr') . '/qtr.css');
+  drupal_add_js(drupal_get_path('module', 'qtr') . '/qtr.js');
+}
+
+/*
+ * Implements hook_block_configure
+ */
+
+function qtr_block_configure($delta = '') {
+    if ($delta == 'popular') {
+        $posttype = array();
+        $default = array();
+        foreach (node_type_get_types() as $type => $type_obj) {
+            $posttype[$type] = $type_obj->name;
+            if (variable_get('popular_block_' . $type, 0)) {
+                $default[] = $type;
+            }
+        }
+        $form['content_type'] = array(
+            '#type' => 'checkboxes',
+            '#title' => t('Content type to display'),
+            '#options' => $posttype,
+            '#default_value' => $default,
+        );
+        return $form;
+    }
+}
+
+/*
+ * Implements hook_block_save
+ */
+
+function qtr_block_save($delta, $edit = array()) {
+    if ($delta == 'popular') {
+        foreach (node_type_get_types() as $type => $type_obj) {
+            if (variable_get('popular_block_' . $type, 0)) {
+                variable_del('popular_block_' . $type);
+            }
+        }
+        foreach ($edit['content_type'] as $type) {
+            variable_set('popular_block_' . $type, $type);
+        }
+    }
+}
+
+/*
+ * Implements hook_block_view
+ */
+
+function qtr_block_view($delta = '') {
+  if ($delta == 'popular') {
+    $contents = '<div class="title_block_head">
+<h2>Top papers</h2>
+<div id="tab_menu">
+<a href="javascript:;" id="cont-1" class="tabLink active_tab">Top value</a>
+<a href="javascript:;" id="cont-2" class="tabLink ">Most downloads</a>
+<a href="javascript:;" id="cont-3" class="tabLink ">Most votes</a>
+<div class="clear"></div>
+</div>
+</div>';
+    $contents .= '<div class="content_box">
+<div class="tabcontent" id="cont-1-1">
+<ul class="red_arrow_li">';
+    $showlist = qtr_get_topquality(5);
+    if ($showlist) {
+      foreach ($showlist as $list) {
+        $contents .= '<li><a href="' . url('node/' . $list->nid) . '" target="_blank">' . $list->title . "</a></li>";
+            }
+        }
+        else {
+            $contents .='No polular content yet.';
+        }
+        $contents .= '</ul>
+<div class="right_align">
+<a href="' . url('papers/popular') . '" class="red_see_more2">Show more</a>
+</div>
+</div>
+<div class="tabcontent hide" id="cont-2-1"><ul class="red_arrow_li">';
+        $showlist = qtr_get_topitems(5, 2, 30);
+        if ($showlist) {
+            foreach ($showlist as $list) {
+                $contents .= '<li><a href="' . url('node/' . $list->nid) . '" target="_blank">' . $list->title . '</a> <span class="grey_text3">(' . $list->count . " downloads)</span></li>";
+            }
+        }
+        else {
+            $contents .='No polular content yet.';
+        }
+$contents .= '</ul><div class="right_align">
+<a href="' . url('papers/popular', array('query' => array('order' => 'download'))) . '" class="red_see_more2">Show more</a>
+</div></div><div class="tabcontent hide" id="cont-3-1"><ul class="red_arrow_li">';
+    $showlist = qtr_get_topitems(5, 1, 30);
+    if ($showlist) {
+            foreach ($showlist as $list) {
+                $contents .= '<li><a href="' . url('node/' . $list->nid) . '" target="_blank">' . $list->title . '</a> <span class="grey_text3">(' . $list->count . " votes)</span></li>";
+            }
+        }
+        else {
+            $contents .= 'No polular content yet.';
+        }
+        $contents .= '</ul><div class="right_align">
+<a href="' . url('papers/popular', array('query' => array('order' => 'vote'))) . ' "class="red_see_more2">Show more</a>
+</div></div></div>';
+
+   
+  /*      $showlist = qtr_get_topquality(5);
+        $blocks['subject'] = 'Highlighted contents';
+$contents='<ul class="option">
+<span class="optionlink optionlinkon" id="byquality"><a
+href="javascript:PopByQuality()"><span class="Clink">top papers</span></a>
+</span>
+<span class="optionlink optionlinkoff" id="bydownload"><a
+href="javascript:PopByBownload()"><span class="Clink">most downloads</span></a>
+</span>
+</ul>';
+        $contents .= '<div class="Visible" id="quality"><ul>';
+        if ($showlist) {
+            foreach ($showlist as $list) {
+                $contents .= '<li><a href="'.url('node/' . $list->nid) . '" target="_blank">' . $list->title . "</a></li>";
+            }
+        } else {
+            $contents .='No polular content yet.';
+        }
+        $contents .= '</ul><a href="'.url('papers').'" class="more"><strong>show more </strong></a></div>';
+        $showlist = qtr_get_topitems(5,2,30);
+        $contents .= '<div class="listsHidden" id="download"><ul>';
+        if ($showlist) {
+            foreach ($showlist as $list) {
+                $contents .= '<li><a href="'.url('node/' . $list->nid) . '" target="_blank">' . $list->title . "</a> (".$list->count." downloads)</li>";
+            }
+        } else {
+            $contents .='No polular content yet.';
+        }
+        $contents .= '</ul><a href="'.url('papers').'" class="more"><strong>show more </strong></a></div>';*/
+        global $user;
+        $blocks['content'] = $contents;
+        return $blocks;
+    }  
+}
+
+
+/*
+ * Implements hook_cron
+ * 
+ * Automatically run QTR
+ */
+
+function qtr_cron() {
+  if (variable_get('qtr_updatetime', 0)+24*3600<strtotime('now')) {
+    variable_set('qtr_updatetime', strtotime('now')-50);
+    qtr_demo();
+  }
+}

@@ -1,0 +1,8 @@
+name = QTR_patterns
+description = "Add Patterns integration to load configuration from text files"
+package = Reputation
+core = 7.x
+php = 5.3
+
+dependencies[] = qtr
+dependencies[] = patterns

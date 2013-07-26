@@ -1,0 +1,48 @@
+<?php
+
+function visualscience_docgraph_install() {
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  if ($public_uri === FALSE) {
+    drupal_set_message(st('Error at Document Graph installation. Public URI creation failed.'), 'error');
+    return;
+  }
+  $main_path = '/visualscience_docgraph/';
+  variable_set('visualscience_docgraph_main_path', $main_path);
+  if (!is_dir($public_uri . $main_path)) {
+    drupal_mkdir($public_uri . $main_path, 0777);
+  }
+  
+  _visualscience_docgraph_generate_author($public_uri . $main_path);
+  _visualscience_docgraph_generate_reference($public_uri . $main_path);
+}
+
+
+function visualscience_docgraph_uninstall() {
+  $path = variable_get('visualscience_docgraph_main_path');
+  $public_uri = FALSE;
+  if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+    $public_uri = $wrapper->realpath();
+  }
+  if ($public_uri === FALSE) {
+    drupal_set_message(t('Error at Document Graphs uninstallation. Public URI is FALSE.'), 'error');
+    return;
+  }
+}
+
+function _visualscience_docgraph_rrmdir($dir) {
+  if (strpos($dir, "/") !== strlen($dir) - 1) {
+    $dir .= "/";
+  }
+  foreach (glob($dir . '*') as $file) {
+    if (is_dir($file)) {
+      _visualscience_docgraph_rrmdir($file);
+    }
+    else {
+      drupal_unlink($file);
+    }
+  }
+  drupal_rmdir($dir);
+}

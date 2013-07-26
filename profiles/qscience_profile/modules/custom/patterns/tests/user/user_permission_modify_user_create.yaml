@@ -1,0 +1,34 @@
+info:
+  title: User with new role and permissions
+  description: Creates a test user, a new role with a set of permissions, and assign it to that user.
+  author: QScience
+  category: Users
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+actions:
+  - create:
+      tag: user
+      name: test_uid_sem_dependencies
+      mail: testemail_sem_dependencies@example.com
+      password: test_password
+      timezone: Europe/Berlin
+      status: 1
+
+  - create:
+      tag: role
+      name: manager_sem_dep
+
+  - modify:
+      tag: permission
+      role: manager_sem_dep
+      value:
+        - administer blocks
+        - administer image styles
+
+  - create:
+      tag: role_users
+      role: manager_sem_dep
+      users:
+        - test_uid_sem_dependencies

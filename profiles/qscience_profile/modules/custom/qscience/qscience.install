@@ -1,0 +1,979 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for QScience.
+ *
+ * @ingroup QScience
+ */
+function qscience_user_field() {
+  include_once DRUPAL_ROOT . '/includes/locale.inc';
+  $countries = country_get_list();
+  field_info_cache_clear();
+  // Create fields for user entity type.
+  $fields = array(
+    array(
+      'field_name' => 'first_name',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'last_name',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'country',
+      'type' => 'list_text',
+      'settings' => array(
+        'allowed_values' => $countries,
+      ),
+    ),
+    array(
+      'field_name' => 'position',
+      'type' => 'list_text',
+      'settings' => array(
+        'allowed_values' => array(
+          'Professor' => 'Professor',
+          'PostDoc' => 'PostDoc',
+          'PhD' => 'PhD',
+          'Others' => 'Others'
+        ),
+      ),
+    ),
+    array(
+      'field_name' => 'institution',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'website',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'research_fields',
+      'type' => 'text',
+    ),
+  );
+
+  foreach ($fields as $field) {
+    field_create_field($field);
+  }
+  // Create instances for user entity type.
+  $instances = array(
+    array(
+      'field_name' => 'first_name',
+      'label' => 'First Name',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 0,
+      ),
+    ),
+    array(
+      'field_name' => 'last_name',
+      'label' => 'Last Name',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 1,
+      ),
+    ),
+    array(
+      'field_name' => 'country',
+      'label' => 'Country',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'options_select',
+        'weight' => 2,
+      ),
+    ),
+    array(
+      'field_name' => 'institution',
+      'label' => 'Institution',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 3,
+      ),
+    ),
+    array(
+      'field_name' => 'research_fields',
+      'label' => 'Field(s) of Research (e.g. Economics, Computer Science, etc.).',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 4,
+      ),
+    ),
+    array(
+      'field_name' => 'position',
+      'label' => 'Position',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'options_select',
+        'weight' => 5,
+      ),
+    ),
+    array(
+      'field_name' => 'website',
+      'label' => 'Home page / blog',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 6,
+      ),
+    ),
+  );
+  foreach ($instances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+/**
+ * Create fields for node entity type.
+ */
+function qscience_create_field() {
+
+  $fields = array(
+    array(
+      'field_name' => 'authorname',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'abstract',
+      'type' => 'text_with_summary',
+    ),
+    array(
+      'field_name' => 'journal',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'note',
+      'type' => 'text_with_summary',
+    ),
+    array(
+      'field_name' => 'dateend',
+      'type' => 'datetime',
+      'settings' => array(
+        'granularity' => drupal_map_assoc(array('year', 'month', 'day')),
+      )
+    ),
+    array(
+      'field_name' => 'datebegin',
+      'type' => 'datetime',
+      'settings' => array(
+        'granularity' => drupal_map_assoc(array('year', 'month', 'day')),
+      )
+    ),
+    array(
+      'field_name' => 'url',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'city',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'field_serial_no',
+      'type' => 'arxiv',
+    ),
+    array(
+      'field_name' => 'field_reviewer',
+      'type' => 'text',
+    ),
+    array(
+      'field_name' => 'field_prefix',
+      'type' => 'list_text',
+      'settings' => array(
+        'allowed_values' => array(
+          'Call for papers' => 'Call for papers',
+          'Announcement' => 'Announcement',
+//          'Job Opening' => 'Job Opening',
+          'Award' => 'Award',
+          'Conference Report' => 'Conference Report',
+          'Others' => 'Others'),
+      ),
+    ),
+    array(
+      'field_name' => 'field_paper_upload',
+      'type' => 'file',
+      'settings' => array(
+        'file_extensions' => 'pdf, ps, doc, txt, rtf',
+      ),
+    ),
+  );
+  foreach ($fields as $field) {
+    field_create_field($field);
+  }
+}
+
+/**
+ * Creating paper node.
+ */
+function qscience_node_paper() {
+  $type = array(
+    'type' => 'paper',
+    'name' => t('Paper'),
+    'base' => 'node_content',
+    'description' => t("Scientific paper type which allows users to vote."),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+  $paperinstances = array(
+    array(
+      'field_name' => 'field_paper_upload',
+      'label' => 'Paper',
+      'description' => 'Upload the paper.',
+      'entity_type' => 'node',
+      'bundle' => 'paper',
+      'settings' => array(
+        'file_extensions' => 'pdf',
+      ),
+      'widget' => array(
+        'type' => 'file_generic',
+        'weight' => -10,
+        'settings' => array(
+          'filefield_sources' => array(
+            'filefield_sources' => array(
+              'remote' => 'remote'
+            ),
+            'source_attach' => array(
+              'path' => 'file_attach',
+              'absolute' => 0,
+            )
+          )
+        )
+      ),
+      'required' => 0,
+    ),
+//    array(
+//      'field_name' => 'url',
+//      'label' => 'External URL',
+//      'entity_type' => 'node',
+//      'bundle' => 'paper',
+//      'widget' => array(
+//        'type' => 'text_textfield',
+//        'weight' => -8,
+//      ),
+//    ),
+    array(
+      'field_name' => 'abstract',
+      'label' => 'Abstract',
+      'entity_type' => 'node',
+      'bundle' => 'paper',
+      'widget' => array(
+        'type' => 'text_textarea_with_summary',
+        'weight' => 0,
+      ),
+      'required' => 1,
+    ),
+  );
+  foreach ($paperinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+/**
+ * Creating arxiv node.
+ */
+function qscience_node_arxiv() {
+  $type = array(
+    'type' => 'paper_from_arxiv',
+    'name' => t('Paper from arxiv'),
+    'base' => 'node_content',
+    'description' => t("Scientific paper type If the paper is posted on arXiv.org."),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+  $instance = array(
+    'field_name' => 'field_serial_no',
+    'label' => 'Serial No.',
+    'description' => 'Please enter the Serial No. For example: 0902.0803',
+    'entity_type' => 'node',
+    'bundle' => 'paper_from_arxiv',
+    'widget' => array(
+      'type' => 'text_field',
+      'weight' => 1,
+    ),
+    'required' => 1,
+  );
+  field_create_instance($instance);
+}
+
+
+function qscience_node_bookreview() {
+  $type = array(
+    'type' => 'bookreview',
+    'name' => t('Book Review'),
+    'base' => 'node_content',
+    'description' => t('A type of content to show book reviews.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+  //add field instances for book review
+  $bookrinstances = array(
+    array(
+      'field_name' => 'authorname',
+      'label' => 'Author',
+      'entity_type' => 'node',
+      'bundle' => 'bookreview',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'field_reviewer',
+      'label' => 'Reviewer',
+      'entity_type' => 'node',
+      'bundle' => 'bookreview',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 2,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'abstract',
+      'label' => 'Review',
+      'entity_type' => 'node',
+      'bundle' => 'bookreview',
+      'widget' => array(
+        'type' => 'text_textarea_with_summary',
+        'weight' => 3,
+      ),
+      'required' => 1,
+    ),
+  );
+  foreach ($bookrinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_institution() {
+  $type = array(
+    'type' => 'institution',
+    'name' => t('Institution'),
+    'base' => 'node_content',
+    'description' => t('A type of content to describe institutions.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+
+  //add field instances for institution
+  $instinstances = array(
+    array(
+      'field_name' => 'country',
+      'label' => 'Country',
+      'entity_type' => 'node',
+      'bundle' => 'institution',
+      'widget' => array(
+        'type' => 'options_select',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'city',
+      'label' => 'City',
+      'entity_type' => 'node',
+      'bundle' => 'institution',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 2,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'website',
+      'label' => 'Website',
+      'entity_type' => 'node',
+      'bundle' => 'institution',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 3,
+      ),
+    ),
+  );
+
+  foreach ($instinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_event() {
+  $type = array(
+    'type' => 'event',
+    'name' => t('Event'),
+    'base' => 'node_content',
+    'description' => t('A type of content to describe events.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+
+//add field instances for event
+  $eventinstances = array(
+    array(
+      'field_name' => 'datebegin',
+      'label' => 'Start Date',
+      'entity_type' => 'node',
+      'bundle' => 'event',
+      'widget' => array(
+        'type' => 'date_select',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'dateend',
+      'label' => 'End Date',
+      'entity_type' => 'node',
+      'bundle' => 'event',
+      'widget' => array(
+        'type' => 'date_select',
+        'weight' => 2,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'city',
+      'label' => 'Location',
+      'entity_type' => 'node',
+      'bundle' => 'event',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 3,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'website',
+      'label' => 'Event website',
+      'entity_type' => 'node',
+      'bundle' => 'event',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 4,
+      ),
+    ),
+  );
+
+  foreach ($eventinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_news() {
+  $type = array(
+    'type' => 'news',
+    'name' => t('News'),
+    'base' => 'node_content',
+    'description' => t('A type of content to describe news.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+  node_add_body_field($type);
+
+//add field instances for event
+  $newsinstances = array(
+    array(
+      'field_name' => 'field_prefix',
+      'label' => 'Prefix',
+      'entity_type' => 'node',
+      'bundle' => 'news',
+      'widget' => array(
+        'type' => 'options_select',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+  );
+
+  foreach ($newsinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_jobs() {
+  $type = array(
+    'type' => 'job_opening',
+    'name' => t('Job openings'),
+    'base' => 'node_content',
+    'description' => t('A type of content to describe job openings.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+  node_add_body_field($type);
+
+  //add field instances for job
+  $jobsinstances = array(
+    array(
+      'field_name' => 'website',
+      'label' => 'Jobs website',
+      'entity_type' => 'node',
+      'bundle' => 'news',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 2,
+      ),
+    ),
+  );
+
+  foreach ($jobsinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_editorial() {
+  $type = array(
+    'type' => 'editorial',
+    'name' => t('Editorial'),
+    'base' => 'node_content',
+    'description' => t('The Editorial content type.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+
+  //add field instances for editorial
+  $editorialinstances = array(
+    array(
+      'field_name' => 'authorname',
+      'label' => 'Author',
+      'entity_type' => 'node',
+      'bundle' => 'editorial',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'abstract',
+      'label' => 'Abstract',
+      'entity_type' => 'node',
+      'bundle' => 'editorial',
+      'widget' => array(
+        'type' => 'text_textarea_with_summary',
+        'weight' => 4,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'note',
+      'label' => 'Content',
+      'entity_type' => 'node',
+      'bundle' => 'editorial',
+      'widget' => array(
+        'type' => 'text_textarea_with_summary',
+        'weight' => 2,
+      ),
+      'required' => 1,
+    ),
+  );
+  foreach ($editorialinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_journal() {
+  $type = array(
+    'type' => 'journal',
+    'name' => t('Journal'),
+    'base' => 'node_content',
+    'description' => t('A type of content to describe journals.'),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+
+//add field instances for journal
+  $journalinstances = array(
+    array(
+      'field_name' => 'research_fields',
+      'label' => 'Fields',
+      'entity_type' => 'node',
+      'bundle' => 'journal',
+      'weight' => 11,
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+  );
+
+  foreach ($journalinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_node_author() {
+
+  $type = array(
+    'type' => 'author',
+    'name' => t('Author'),
+    'base' => 'node_content',
+    'description' => t("Authors to scientific papers."),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+  $authorinstances = array(
+    array(
+      'field_name' => 'first_name',
+      'label' => 'First name',
+      'entity_type' => 'node',
+      'bundle' => 'author',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 1,
+      ),
+      'required' => 1,
+    ),
+    array(
+      'field_name' => 'last_name',
+      'label' => 'Last name',
+      'entity_type' => 'node',
+      'bundle' => 'author',
+      'widget' => array(
+        'type' => 'text_textfield',
+        'weight' => 2,
+      ),
+      'required' => 1,
+    ),
+  );
+  foreach ($authorinstances as $instance) {
+    field_create_instance($instance);
+  }
+}
+
+function qscience_author_autotitle() {
+  $pattern = '<?php
+    $ret = "";
+    foreach ($node->first_name as $lang) {
+      foreach ($lang as $key => $val) {
+        $ret .= $val["value"];
+        break;
+      }
+      break;
+    }
+    $ret .= " ";
+    foreach ($node->last_name as $lang) {
+      foreach ($lang as $key => $val) {
+        $ret .= $val["value"];
+        break;
+      }
+      break;
+    }
+    return $ret;
+    ?>
+  ';
+
+  // enable auto nodetitle
+  variable_set('ant_author', 1);
+  // setting the pattern
+  variable_set('ant_pattern_author', $pattern);
+  // enable pattern
+  variable_set('ant_php_author', 1);
+}
+
+function qscience_relation_create() {
+  $param = array(
+    'relation_type' => 'belongs_to',
+    'min_arity' => '2',
+    'max_arity' => '2',
+    'label' => 'belongs to',
+    'reverse_label' => '',
+    'directional' => 0,
+    'transitive' => 0,
+    'r_unique' => 0,
+    'source_bundles' => array(
+      'node:author' => 'node:author',
+      'node:paper' => 'node:paper',
+    ),
+    'target_bundles' => array(
+    ),
+  );
+
+  relation_type_save($param);
+
+  $param = array(
+    'relation_type' => 'references_to',
+    'min_arity' => '2',
+    'max_arity' => '2',
+    'label' => 'references to',
+    'reverse_label' => '',
+    'directional' => 0,
+    'transitive' => 0,
+    'r_unique' => 0,
+    'source_bundles' => array(
+      'node:paper' => 'node:paper',
+      'node:paper' => 'node:paper',
+    ),
+    'target_bundles' => array(
+    ),
+  );
+
+  relation_type_save($param);
+}
+
+function qscience_author_reference_field_create() {
+  $field = array(
+    'field_name' => 'author_reference',
+    'type' => 'entityreference',
+    'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array(
+        'target_bundles' => array('author'),
+        'lazy_reference' => array('lazy_reference' => 'lazy_reference'),
+        'unique_reference' => array('unique_reference' => 'unique_reference'),
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'author_reference',
+    'entity_type' => 'node',
+    'bundle' => 'paper',
+    'label' => t('Authors'),
+    'weight' => 5,
+    'widget' => array(
+      'type' => 'entityreference_autocomplete',
+      'weight' => 6,
+    ),
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array(
+        'target_bundles' => array('author'),
+        'lazy_reference' => array('lazy_reference' => 'lazy_reference'),
+        'unique_reference' => array('unique_reference' => 'unique_reference'),
+      ),
+    ),
+    'display' => array(
+      'default' => array(
+        'settings' => array(
+          'link' => 1
+        )
+      )
+    )
+  );
+  field_create_instance($instance);
+}
+
+function qscience_citation_reference_field_create() {
+  $field = array(
+    'field_name' => 'citation_reference',
+    'type' => 'entityreference',
+    'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array(
+        'target_bundles' => array('paper'),
+        'lazy_reference' => array('lazy_reference' => 'lazy_reference'),
+        'unique_reference' => array('unique_reference' => 'unique_reference'),
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'citation_reference',
+    'entity_type' => 'node',
+    'bundle' => 'paper',
+    'label' => t('References'),
+    'widget' => array(
+      'type' => 'entityreference_autocomplete',
+      'weight' => 10,
+    ),
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array(
+        'target_bundles' => array('paper'),
+        'lazy_reference' => array('lazy_reference' => 'lazy_reference'),
+        'unique_reference' => array('unique_reference' => 'unique_reference'),
+      ),
+    ),
+    'display' => array(
+      'default' => array(
+        'settings' => array(
+          'link' => 1
+        )
+      )
+    )
+  );
+  field_create_instance($instance);
+}
+
+function qscience_journal_reference_field_create() {
+  $field = array(
+    'field_name' => 'journal_reference',
+    'type' => 'entityreference',
+    'cardinality' => 1,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array(
+        'target_bundles' => array('journal'),
+        'lazy_reference' => array('lazy_reference' => 'lazy_reference'),
+        'unique_reference' => array('unique_reference' => 'unique_reference'),
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'journal_reference',
+    'entity_type' => 'node',
+    'bundle' => 'paper',
+    'label' => t('Journal'),
+    'widget' => array(
+      'type' => 'entityreference_autocomplete',
+      'weight' => 12,
+    ),
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array(
+        'target_bundles' => array('journal'),
+        'lazy_reference' => array('lazy_reference' => 'lazy_reference'),
+        'unique_reference' => array('unique_reference' => 'unique_reference'),
+      ),
+    ),
+    'display' => array(
+      'default' => array(
+        'settings' => array(
+          'link' => 1
+        )
+      )
+    )
+  );
+  field_create_instance($instance);
+}
+
+/**
+ * Implements hook_install().
+ */
+function qscience_install() {
+  qscience_user_field();
+  qscience_create_field();
+  qscience_node_arxiv();
+  qscience_node_bookreview();
+  qscience_node_institution();
+  qscience_node_journal();
+  qscience_node_event();
+  qscience_node_news();
+  qscience_node_editorial();
+  qscience_node_author();
+  qscience_node_paper();
+
+  qscience_author_autotitle();
+
+  qscience_author_reference_field_create();
+  qscience_citation_reference_field_create();
+  qscience_journal_reference_field_create();
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function qscience_uninstall() {
+  // Delete all the  fields and instances
+  field_delete_field('first_name');
+  field_delete_field('last_name');
+  field_delete_field('country');
+  field_delete_field('position');
+  field_delete_field('institution');
+  field_delete_field('website');
+  field_delete_field('research_fields');
+
+  field_delete_field('authorname');
+  field_delete_field('abstract');
+  field_delete_field('journal');
+  field_delete_field('note');
+  field_delete_field('dateend');
+  field_delete_field('datebegin');
+  field_delete_field('url');
+  field_delete_field('city');
+  field_delete_field('field_serial_no');
+  field_delete_field('field_prefix');
+  field_delete_field('field_upload');
+  field_delete_field('field_reviewer');
+  field_delete_field('paper_reference');
+  field_delete_field('author_reference');
+  field_delete_field('citation_reference');
+
+  $types = array(
+    array(
+      'type' => 'paper',
+    ),
+    array(
+      'type' => 'paper_from_arxiv',
+    ),
+    array(
+      'type' => 'institution',
+    ),
+    array(
+      'type' => 'journal',
+    ),
+    array(
+      'type' => 'event',
+    ),
+    array(
+      'type' => 'bookreview',
+    ),
+    array(
+      'type' => 'editorial',
+    ),
+    array(
+      'type' => 'news',
+    ),
+    array(
+      'type' => 'author',
+    ),
+  );
+  foreach ($types as $type) {
+    node_type_delete($type['type']);
+    variable_del('node_preview_' . $type['type']);
+  }
+
+  node_types_rebuild();
+  menu_rebuild();
+  drupal_cron_run();
+}
+

@@ -1,0 +1,171 @@
+/*
+ * Added code for tab-design
+ */
+ a:hover{
+ 	cursor:pointer;
+ }
+
+ .close-tab-cross {
+ 	cursor:pointer;
+ 	font-weight:bolder;
+ 	margin-left:10px;
+ }
+ .close-tab-cross:hover {
+ 	color:#FF0000;
+ }
+
+ .action-bar {
+ 	width:100%;
+ 	display:inline-block;
+ 	position:relative;	
+ 	border:solid black 1px; 
+ }
+
+ .action-bar-container {
+ 	top:0px;
+ 	width:15%;
+ 	overflow:hidden;
+ 	padding-right:2px;
+ 	padding-bottom:2px;
+ 	margin-right:8px;
+ 	margin-top:10px;
+ 	margin-bottom:8px;
+ 	display:inline-block;
+ 	float:left;
+ }
+
+ .small-addition-in-title {
+ 	padding-left:3px;
+ 	font-size:72%;
+ 	font-weight:normal;
+ }
+
+ .clickable:hover {
+ 	cursor: pointer;
+ }
+ .vs-button {
+ 	background-color: #ffffff;
+ 	background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#d1d1d1)); /* Chrome, Safari 4+ */
+ 	background-image: -webkit-linear-gradient(top, #ffffff, #d1d1d1); /* Chrome 10-25, iOS 5+, Safari 5.1+ */
+ 	background-image:    -moz-linear-gradient(top, #ffffff, #d1d1d1); /* Firefox 3.6-15 */
+ 	background-image:      -o-linear-gradient(top, #ffffff, #d1d1d1); /* Opera 11.10-12.00 */
+ 	background-image:         linear-gradient(to bottom, #ffffff, #d1d1d1); /* Chrome 26, Firefox 16+, IE 10+, Opera 12.50+ */
+
+ 	-webkit-box-shadow: 0px 0px 4px 0px #ffffff; /* Android 2.3+, iOS 4.0.2-4.2, Safari 3-4 */
+ 	box-shadow: 0px 0px 4px 0px #ffffff; /* Chrome 6+, Firefox 4+, IE 9+, iOS 5+, Opera 10.50+ */
+
+ 	-webkit-border-radius: 3px; /* Android ≤ 1.6, iOS 1-3.2, Safari 3-4 */
+ 	border-radius: 3px; /* Android 2.1+, Chrome, Firefox 4+, IE 9+, iOS 4+, Opera 10.50+, Safari 5+ */
+
+ 	display: block;
+ 	padding:5px;
+ 	margin:5px;
+ 	border:solid black 1px;
+ 	width:50px;
+ }
+ .vs-button img {
+ 	vertical-align:middle;
+ 	max-height:20px;
+ 	max-width:25px;
+ }
+ .vs-button:hover {
+ 	background-color: #d1d1d1;
+ 	background-image: -webkit-gradient(linear, left top, left bottom, from(#d1d1d1), to(#ffffff)); /* Chrome, Safari 4+ */
+ 	background-image: -webkit-linear-gradient(top, #d1d1d1, #ffffff); /* Chrome 10-25, iOS 5+, Safari 5.1+ */
+ 	background-image:    -moz-linear-gradient(top, #d1d1d1, #ffffff); /* Firefox 3.6-15 */
+ 	background-image:      -o-linear-gradient(top, #d1d1d1, #ffffff); /* Opera 11.10-12.00 */
+ 	background-image:         linear-gradient(to bottom, #d1d1d1, #ffffff); /* Chrome 26, Firefox 16+, IE 10+, Opera 12.50+ */
+ }
+ .visualscience-search {
+ 	-webkit-border-radius: 2px; /* Android ≤ 1.6, iOS 1-3.2, Safari 3-4 */
+ 	border-radius: 2px; /* Android 2.1+, Chrome, Firefox 4+, IE 9+, iOS 4+, Opera 10.50+, Safari 5+ */
+ 	padding: 6px;
+ 	-moz-box-shadow:inset 2px 2px 5px #ccc;
+ 	box-shadow:inset 2px 2px 5px #ccc;
+ 	border: 1px solid #b8b8b8;
+ }
+ .visualscience-search-main {
+ 	-moz-box-shadow:inset 2px 2px 5px #ccc;
+ 	box-shadow:inset 2px 2px 5px #ccc;
+
+ 	font-size: 20px;
+ 	width: 98%;
+ }
+ .visualscience-search-main::-webkit-input-placeholder, .visualscience-search-main::-moz-placeholder {
+ 	font-style: italic;
+ }
+
+ .visualscience-left {
+ 	width:48%;
+ }
+ .visualscience-right {
+ 	width:48%;
+ 	float:right;
+ }
+ .scrollable {
+ 	overflow-y:scroll;
+ }
+ ::-webkit-scrollbar {
+ 	width:8px;
+ }
+ ::-webkit-scrollbar-track {
+ 	-webkit-box-shadow: inset 0 0 0px #000000; 
+ 	-webkit-border-radius: 6px;
+ 	border-radius: 6px;
+ }
+ 
+ ::-webkit-scrollbar-thumb {
+ 	-webkit-border-radius: 6px;
+ 	border-radius: 6px;
+ 	background: rgba(0,0,0,0); 
+ 	-webkit-box-shadow: inset 0 0 20px #575757;
+ }
+ table .vsSelectedRow {
+ 	border:solid #757575 2px;
+ 	-webkit-box-shadow: inset 0px 0px 7px 0px #757575;
+ 	box-shadow: inset 0px 0px 7px 0px #757575;
+ }
+
+ #visualscience-container select {
+ 	background: transparent;
+ 	width: 100%;
+ 	padding-top: 8px;
+ 	border: 0;
+ 	border-radius: 0;
+ 	height: 34px;
+ }
+
+ #visualscience-container .vs-userlist-table .clickToSelect input {
+ 	margin:10px;
+ }
+
+ #visualscience-container .vs-userlist-table thead tr th {
+ 	color:black;//rgb(213, 22, 17);
+ 	font-size:13px;
+ 	padding:5px;
+
+ 	background-color: #ffffff;
+ 	background-image: -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#c4c0c4)); /* Chrome, Safari 4+ */
+ 	background-image: -webkit-linear-gradient(top, #ffffff, #c4c0c4); /* Chrome 10-25, iOS 5+, Safari 5.1+ */
+ 	background-image:    -moz-linear-gradient(top, #ffffff, #c4c0c4); /* Firefox 3.6-15 */
+ 	background-image:      -o-linear-gradient(top, #ffffff, #c4c0c4); /* Opera 11.10-12.00 */
+ 	background-image:         linear-gradient(to bottom, #ffffff, #c4c0c4);
+ }
+
+ #visualscience-container .vs-userlist-table thead tr{
+ 	border: solid #c4c0c4 1px;
+ }
+
+ #visualscience-container input[type=button] {
+ 	padding:5px;
+ }
+
+ #visualscience-container input {
+ 	min-height:20px;
+ }
+
+ .entryRecipient, .entryFile {
+ 	border-bottom: solid black 1px;
+ 	margin: 0px;
+ 	padding: 8px;
+ }

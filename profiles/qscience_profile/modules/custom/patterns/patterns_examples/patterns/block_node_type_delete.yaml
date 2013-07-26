@@ -1,0 +1,20 @@
+# YAML Block Pattern
+# QScience
+
+info:
+  title: Blocks and Node types (delete)
+  description: Makes search block not visible for the content type page
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+modules:
+  - block
+block_node_type:
+  - 
+    delete:
+      tag: block_node_type
+      module: search
+      delta: form
+      type: page

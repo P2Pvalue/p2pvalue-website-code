@@ -1,0 +1,70 @@
+# YAML Content Create evevt Pattern
+# QScience
+
+info:
+  title: Institution(content types create)
+  description: Creates following content types Event
+  author: QScience
+  category: Content
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+  
+actions:
+  - create:
+      tag: content_type
+      name: Event
+      type: event
+      description:  create a content type that can describe Event
+      title_label: Event Content Type
+      node_preview: 1
+      help: create a content type that can describe Event
+      node_options:
+        - status
+        - promote
+        - sticky
+  - create:
+      tag: instance
+      entity: node
+      bundle: event
+      name: name
+      label: Name
+      type: text
+      widget: text_textfield        
+      weight: 1
+  - create:
+      tag: instance
+      entity: node
+      bundle: event
+      name: location
+      label: Location
+      type: text
+      widget: text_textfield
+      weight: 2
+  - create:
+      tag: instance
+      entity: node
+      bundle: event
+      name: date_begin
+      label: Date Begin
+      type: text
+      widget: text_textfield
+      weight: 3
+  - create:
+      tag: instance
+      entity: node
+      bundle: event
+      name: date_end
+      label: Date End
+      type: text
+      widget: text_textfield
+      weight: 4
+  - create:
+      tag: instance
+      entity: node
+      bundle: event
+      name: description
+      label: Description
+      type: text_with_summary
+      widget: text_textarea_with_summary
+      weight: 5

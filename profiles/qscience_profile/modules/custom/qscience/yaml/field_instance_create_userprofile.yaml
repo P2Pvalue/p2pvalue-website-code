@@ -1,0 +1,92 @@
+# YAML UserPrifile Pattern
+# QScience
+
+info:
+  title: UserProfile Field (create)
+  description: Creates new custom field to user profile
+  author: QScience
+  category: Field
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+actions:
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: first_name
+      label: First Name
+      type: text
+      widget: text_textfield
+      weight: 1
+
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: last_name
+      label: Last Name
+      type: text
+      widget: text_textfield
+      weight: 2
+
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: country
+      label: Country
+      type: list_text
+      widget: options_select
+      weight: 3
+      
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: position
+      label: Position
+      type: list_text
+      widget: options_select
+      weight: 4
+      
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: institution
+      label: Institution
+      type: taxonomy_term_reference
+      widget: taxonomy_autocomplete
+      weight: 5
+      
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: picture
+      label: Picture
+      type: image
+      widget: image_image
+      weight: 6
+      
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: website
+      label: Website
+      type: text
+      widget: text_textfield
+      weight: 7
+            
+  - create:
+      tag: instance
+      entity: user
+      bundle: user
+      name: research_fields
+      label: Field(s) of Research
+      type: list_text
+      widget: options_buttons
+      weight: 8

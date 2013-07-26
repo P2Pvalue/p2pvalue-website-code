@@ -1,0 +1,21 @@
+# YAML Variables Pattern
+# QScience
+
+info:
+  title: Modify variables
+  description: New test case adapted to new syntax
+  author: QScience
+  category: System
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+actions:
+  - modify:
+      tag: variables
+      - variable
+        name: user_picture_file_size
+        value: 800
+      - variable
+        name: user_register
+        value: 1

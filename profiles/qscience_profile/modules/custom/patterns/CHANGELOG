@@ -1,0 +1,298 @@
+7200
+
+		- Changes to allow compatibility with Libraries 7.x-2.x
+		- Improved compatiblity with Codemirror editor and some other minor fixes
+		- Required Codemirror version >= 3.0.1, should be placed at sites/[all]/codemirror
+		- Required Spyc version >= 0.5.1
+		- Issue #1955410 by pobster: Missing argument 1 for menu_patterns()
+
+
+7200-rc1
+
+		- Syntactic and semantic validation
+		- Improvement of the export functions and components extension
+		- Compatibility with Patterns Server
+
+7100-rc3:
+		- @TO-DO: Aware users about changes in the syntax in system components: 
+		'modules' action renamed to 'module', variables as a set of modify actions
+
+7100-rc1:
+
+		- Improved export process
+		- Export via batch available
+		- Export to file or Zip available
+		- Better error handling generally
+		- Drush integration
+
+7070:
+		- Multilevel validation
+		- Patterns can be exported in different ways: zip, file, to db
+7065:
+
+		- Partial drush integration 
+
+7060:
+
+		- All patterns hooks for executing patterns are optional now
+		- Validation is now also on the level of the single tags
+
+************************************************************************************
+
+
+7059:
+
+		- Fixed published patterns bug http://drupal.org/node/1619162
+
+7058:
+
+		- Created Patterns_export submodule.
+		- Patterns_components depends on patterns_export
+
+7057:
+
+		- Added checking in the export function if the component returns
+			an empty array.
+
+7056:
+
+		- PHP parser is working
+		- All parsers can dump comments (PHP parsers ignores them)
+		- All parsers can append to a previous dump
+		- Lab appends information to exported patterns
+
+7055:
+
+		- Tests are now restored
+
+7054:
+
+		- Info page completed
+
+7053:
+
+		- patterns_io_load_components uses drupal_static now and returns an
+			array of paths to components
+
+7052:
+		- SimpleTests re-enabled.
+		- General Test detached from patterns.test
+		- Added a README.md in the test directory
+		- Full path to patterns files must be specified when using runFile()
+		- Added help for testing (to move into Drupal.org doc)
+		- PatternRunTestCase -> PatternsTestCase
+
+7051:
+		- Major Update: Patterns_d2d submodule added: Patterns can be automatically
+			pushed to a Patterns Server.
+	
+*********************************************************************************************
+
+7050:
+		- Beautified interface: changed some of the labels and added a small title
+			to all pages
+		- Patterns Export -> Patterns Lab
+		- Patterns Extract -> Patterns Export
+		- Patterns Quick-Run become a MENU_CALLBACK instead of MENU_LOCAL_TASK
+
+7049:
+
+		- Fixed module/tag/form selection in the extract page.
+		- Extraction automatically adds the modules which are required for
+			running the pattern
+
+7048:
+
+		- Publish/Unpublish pattern has a separate function to access the db.
+
+7047:
+		
+		- Page for public patterns created.
+		- Admin can set an url for the page from the settings page.
+
+7046:
+
+		- Automatic extraction seems to work, for ALL and for specific forms / components
+		- TODO: improve GUI
+
+7045:
+
+		- Added hook_patterns_publish and hook_patterns_unpublish
+
+7044:
+
+		- Added drush hooks to automatically download and enable modules
+
+7043:
+
+		- During saving operation, if failing in parsing a pattern file previously 
+		  copied in the files directory, the file is removed.
+
+7042:
+		- Created page for displaying information after first install of 
+		    patterns.
+
+7041:
+
+		- Patterns removal from the file systems works as well
+
+7040:		- Fixed bug drush installation of YAML Parser together with Patterns
+		- Parser scan detached from parser
+
+7039:
+
+		- Parser validates correctly all types of included patterns
+
+7038:
+		- XML Parser Dump works correctly
+
+7037:
+
+		- All necessary files are correctly included in the .install file
+
+7036:
+
+		- Added an Info page, which displays general information about
+				the status of the Patterns module as a whole.
+
+7035:
+
+		- Fixed bugs in importing new patterns.
+		- Extension is automatically added to saved files, if missing.
+
+7034:
+
+		- Theme directory moved outside includes.
+		- Modules page per pattern restored
+
+7033:
+
+		- XML Patterns feed restored
+
+7032:
+
+		- Fixed several bugs related to updated function names.
+		- TODO: check simple tests
+
+7031:
+
+		- Patterns Example sub-module created.
+
+7030:
+
+		- Dynamic Parsers allowed
+		- XML, PHP and YAML Parser moved into a separate sub-modules
+
+7029:
+
+		- Include directory refactoring
+		- The tag <modules> got a new semantic. It enables (if they are not) the modules 
+				just for the pattern execution, and then re-disables them (if they were so) 
+
+7028:
+
+		- XML support enabled. Dumping is not available
+
+7027:
+
+		- Publish link added again in the interface
+		- Patterns can be restored from the trash bin
+		- Format is displayed in the GUI
+
+7026:
+
+		- Patterns are correctly identified by the file name now. No more ambiguity with extensions
+
+7025:
+
+		- Fixed inconsistencies in the removal process in the GUI. Removed patterns are still not
+			deleted from the fs.
+
+7024:
+
+		- Check for "allow_url_fopen" in hook_requirement. Import from URL form is displayed if 
+				the option is disabled.
+
+7023:
+
+		- Whether refresh patterns from the database or not can be decided from
+				the config settings form
+
+7022:
+
+		- Fixed some little bugs with inclusions
+		- Modules are also enabled when needed by included patterns
+
+7021:
+
+    - Some t() related fixes and TODOs.
+		- Patterns include works also with names and id of patterns
+		- Different Export modes added (full/actions/name/id)
+
+
+7020:
+
+		- Improved io scan directory: 
+					- files that are not updated are not saved again in the database
+					- new patterns are clearly notified when found
+					- divided in scanning and outputing the result of the scan. A boolean verbose flag was added
+		- Patterns interface displays the file name and the pattern title separately
+
+7019:
+
+		- Improved interface
+		- Export page can export to the database
+		- Several code cleanup
+
+7018:
+
+		- patterns can be 'included'
+		- a set of 'include' options provided
+
+7017:
+
+    - patterns DB include empowered. New api for loading patterns added.
+    - patterns_update_db_from_fs. New system setting option added. If selected
+      patterns on the database are automatically sync with fs, unless they were
+      already enabled.
+    - patterns_utils_toString: given a pattern returns a string file_name (title) 
+    - Patterns is aware of patterns files modifications in the file systems
+      and prompt the users with adequate information both in the editor and
+      before executing it.
+
+7016:
+
+    - Don't have to prefix filenames with 'patterns.'.
+    - conf_path() . "/patterns/" added to pattern loading paths.
+
+7015:
+	
+		- Sections are executed sequentially both in batch and php mode
+		- patterns_prepare_action is also executed during the batch now
+		- Defalt mode: batch/php can be set by user
+
+7014:
+		- Added export function with possiblity to zip
+		- Added some AJAX to automatic import function
+
+7013:
+
+		- Default location to save patterns can be chosen by the user
+		- Patterns are loaded from : user-defined location, patterns/patterns/, sites/all/patterns/, profiles/$profile/patterns
+		- In the editor page 'Cancel' became 'Back'
+
+7012:
+
+    - Code cleanup
+    - Partially working drush integration
+    - Dynamic form IDs
+
+
+7011:
+
+    - Added Changelog
+    - Files in the PATTERNS_FILES array are automatically loaded
+    - PHP 5.2 as requisite
+    - Patterns.test: can run automatically a callback on yaml files loaded from a dir
+
+

@@ -1,0 +1,21 @@
+info:
+  title: D2D private key modify
+  category: D2D
+  description: Private key example
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_private_key:
+  - 
+    modify:
+      tag: d2d_private_key
+      key: |
+        -----BEGIN PRIVATE KEY-----
+        My private key.
+        -----END PRIVATE KEY-----

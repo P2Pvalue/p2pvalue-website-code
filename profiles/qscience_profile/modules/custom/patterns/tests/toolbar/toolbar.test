@@ -1,0 +1,62 @@
+<?php
+/**
+ * @file
+ * SimpleTests for the Toolbar component of Patterns.
+ *
+ */
+
+class PatternsToolbarTestCase extends PatternsTestCase {
+
+  var $toolbar_tests_dir;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'toolbar component',
+      'description' => 'Tests toolbar pattern',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->toolbar_tests_dir = $this->getPatternsTestDir() . 'toolbar/';
+
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+    );
+
+    parent::setUp($modules);
+    //$this->adm_user = $this->drupalCreateUser(array('administer site configuration'));
+    //$this->drupalLogin($this->adm_user);
+  }
+
+  /**
+  * Test the:
+  *
+  *    * change some role's permission to let it have the access to see toolbar.
+  *
+  */
+  public function test_toolbar() {
+
+    //for add 'access toolbar' permission to the 'anonymous user' role
+    parent::runFile('toolbar_add.yaml', 'Toolbarrole (add)', $this->toolbar_tests_dir);
+    $query = db_select('role_permission', 'rp')
+            ->fields('rp', array('rid', 'permission'))
+            ->condition('rp.rid', 1)
+            ->condition('rp.permission', 'access toolbar')
+            ->execute()
+            ->fetchAssoc();
+    $this->assertTrue($query, t('Adding \'access toolbar\' works fine.'));
+
+    //for delete 'access toolbar' permission from the 'anonymous user' role
+    parent::runFile('toolbar_delete.yaml', 'Toolbarrole (delete)', $this->toolbar_tests_dir);
+    $query = db_select('role_permission', 'rp')
+          ->fields('rp', array('rid', 'permission'))
+          ->condition('rp.rid', 1)
+          ->condition('rp.permission', 'access toolbar')
+          ->execute()
+          ->fetchAssoc();
+    $this->assertFalse($query, t('Deleting \'access toolbar\' works fine.'));
+  }
+}

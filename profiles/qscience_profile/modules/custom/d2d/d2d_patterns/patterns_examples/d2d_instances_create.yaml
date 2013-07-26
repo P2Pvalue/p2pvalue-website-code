@@ -1,0 +1,28 @@
+info:
+  title: D2D instances CREATE
+  category: D2D
+  description: Instances example
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_instance:
+  - 
+    create:
+      tag: d2d_instance
+      d2d_id: 8AAE7EAEB0D53A63EFFB1ED107F829D6
+      url: http://localhost/A/xmlrpc.php
+      name: Instance A
+      description: this instance A.
+  - 
+    create:
+      tag: d2d_instance
+      d2d_id: 433739DD30328CD11C49580DD661A5B9
+      url: http://localhost/B/xmlrpc.php
+      name: Instance B
+      description: this instance B.

@@ -1,0 +1,106 @@
+<?php
+/**
+ * @file
+ * SimpleTests for the System component of Patterns.
+ */
+
+class PatternsSystemTestCase extends PatternsTestCase {
+
+  var $system_tests_dir;
+
+  static function getInfo() {
+    return array(
+      'name' => 'System component',
+      'description' => 'Enables and disables modules, sets and deletes variables, enables a theme.',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($modules = array(), $first = FALSE) {
+
+    $this->system_tests_dir = $this->getPatternsTestDir() . 'system/';
+
+    // Enable any modules required for the tests.
+    $modules = array('patterns_components',
+                     'patterns_yamlparser',
+    );
+
+    parent::setUp($modules);
+  }
+
+  /**
+   * Check the database if a module is enabled/disabled.
+   * @name Module name
+   * @enabled TRUE iff the module should be enabled.
+   */
+  private function assertModule($name, $enabled = TRUE) {
+    $module = db_select('system', 's')
+      ->fields('s', array('name'))
+      ->condition('name', $name)
+      ->condition('type', 'module')
+      ->condition('status', $enabled ? '1' : '0')
+      ->countQuery()->execute()->fetchField();
+    $this->assertEqual($module, 1, $message = 'The ' . $name . ' module should ' . ($enabled ? '' : 'not ') . 'be enabled.');
+  }
+
+  public function testModules() {
+    // Check for modules before running the pattern.
+    $this->assertModule('aggregator', FALSE);
+    $this->assertModule('forum', FALSE);
+    $this->assertModule('overlay', TRUE);
+    $this->assertModule('number', TRUE);
+
+    // Run the pattern.
+    parent::runFile('modules.yaml', 'Enable/disable modules', $this->system_tests_dir);
+
+    $this->assertModule('aggregator', FALSE);
+    $this->assertModule('forum', TRUE);
+    $this->assertModule('overlay', FALSE);
+    $this->assertModule('number', TRUE);
+  }
+
+  public function testVariables() {
+    //Checking the variables already exist
+    $this->assertNotNull(variable_get('user_picture_file_size', NULL), 'user_picture_file_size should be set.');
+    $this->assertNotNull(variable_get('user_register', NULL), 'user_register should be set.');
+   
+    // Run the pattern.
+    parent::runFile('variables.yaml', 'Modify variables values', $this->system_tests_dir);
+
+    // Check for variables after running the pattern that modifies the values
+    $this->assertIdentical(variable_get('user_picture_file_size', NULL), 800, 'user_picture_file_size should be set properly.');
+    $this->assertIdentical(variable_get('user_register', NULL), 1, t('user_register variable should be set properly.'));
+  }
+
+  public function testForms() {
+    // Check for variables before running the pattern.
+    $this->assertIdentical(variable_get('cache', NULL), NULL, t('cache variable should not be set.'));
+    $this->assertIdentical(variable_get('anonymous', NULL), NULL, t("anonymous variable should not be set."));
+
+    // Run the pattern.
+    parent::runFile('fill_forms.yaml', 'Fill in values for forms', $this->system_tests_dir);
+
+    // Expected messages.
+    $this->assertText(t('The configuration options have been saved.'), t('The forms have been submitted.'));
+
+    // Check for variables after running the pattern.
+    $this->assertIdentical(variable_get('cache', NULL), 1, t('cache variable should be 1.'));
+    $this->assertIdentical(variable_get('anonymous', NULL), 'Anonymous2', t("Anonymous variable should be 'Anonymous2'."));
+
+  }
+
+  public function testTheme() {
+    // Check for the current theme.
+    $this->assertIdentical(variable_get('theme_default', NULL), 'bartik', t('The default theme is bartik.'));
+    $this->assertIdentical(variable_get('admin_theme', NULL), 'seven', t('The default admin theme is seven.'));
+
+    // Run the pattern.
+    parent::runFile('theme.yaml', 'Set theme', $this->system_tests_dir);
+
+    // Check for the current theme after running the pattern.
+    $this->assertIdentical(variable_get('theme_default', NULL), 'garland', t('The default theme is garland.'));
+    $this->assertIdentical(variable_get('admin_theme', NULL), 'bartik', t('The default admin theme is bartik.'));
+
+  }
+
+}

@@ -1,0 +1,58 @@
+# YAML Content Create institution Pattern
+# QScience
+
+info:
+  title: Institution(content types create)
+  description: Creates following content types Institution
+  author: QScience
+  category: Content
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+  
+actions:
+  - create:
+      tag: content_type
+      name: Institution
+      type: institution
+      description:  create a content type that can describe Institution
+      title_label: Institution Content Type
+      node_preview: 1
+      help: create a content type that can describe Institution
+      node_options:
+        - status
+        - promote
+        - sticky
+  - create:
+      tag: instance
+      entity: node
+      bundle: institution
+      name: country
+      label: Country
+      type: list_text
+      widget: options_select
+      settings:
+        allowed_values:
+          China
+          America
+          Switzerland
+          Others          
+      weight: 1
+  - create:
+      tag: instance
+      entity: node
+      bundle: institution
+      name: city
+      label: City
+      type: text
+      widget: text_textfield
+      weight: 2
+  - create:
+      tag: instance
+      entity: node
+      bundle: institution
+      name: website
+      label: Website
+      type: text
+      widget: text_textfield
+      weight: 3

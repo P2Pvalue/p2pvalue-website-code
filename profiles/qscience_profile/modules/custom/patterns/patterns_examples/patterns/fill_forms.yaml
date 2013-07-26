@@ -1,0 +1,27 @@
+# YAML Forms Pattern
+# QScience
+
+info:
+  title: Fill in values for forms
+  description: Based on http://drupal.org/node/516332
+  author: QScience
+  category: System
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+modules:
+  - system
+
+actions: 
+  - create:
+      tag: form
+      form_id: system_performance_settings
+      cache: 1
+#      include: "modules/system/system.admin.inc"
+
+  - create:
+      tag: form
+      form_id: user_admin_settings
+      anonymous: Anonymous2
+

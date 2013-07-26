@@ -1,0 +1,29 @@
+# YAML Theme Pattern
+# QScience
+
+info:
+  title: Set theme color
+  description: as title
+  author: QScience
+  category: Color
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+actions:
+
+  - modify:
+      tag: color
+      theme: bartik
+ #     scheme: default
+      palette:
+        bottom:#494949
+        link:#494949
+        top:#494949
+        bg:#494949
+        sidebar:#494949
+        sidebarborders:#494949
+        footer:#494949
+        titleslogan:#494949
+        text:#494949
+

@@ -1,0 +1,36 @@
+<?php
+
+module_load_include('inc', 'patterns', 'includes/utils');
+
+/**
+ * @file
+ * Installation file for Patterns YAML Parser.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function patterns_yamlparser_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    //Trying to detect Spyc library
+    $library = libraries_detect('spyc');
+    if (empty($library['installed'])) {
+      $requirements['spyc'] = array(
+        'title'       => t('Spyc library (YAML parser)'),
+        'description' => t('Patterns module requires Spyc library to work with YAML patterns. To enable YAML support, download the !spyc library and place it in your libraries directory (e.g. sites/all/libraries/spyc/).',
+                            array('!spyc' => l(t('spyc'), 'https://github.com/mustangostang/spyc/', array('absolute' => TRUE)))),
+        'severity'    => REQUIREMENT_ERROR,
+        'value'       => t('Missing'),
+      );
+    }else{
+      $requirements['spyc'] = array(
+        'title'       => t('Spyc library (YAML parser)'),
+        'severity'    => REQUIREMENT_OK,
+        'value'       => $library['version'],
+      );
+    }
+  }
+  return $requirements;
+}

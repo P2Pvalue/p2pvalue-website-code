@@ -1,0 +1,261 @@
+<?php
+/**
+ * @file
+ * The base of the Patterns Component tests.
+ */
+
+/**
+ * Abstract base class for testing pattern component behavior.
+ */
+abstract class PatternsTestCase extends DrupalWebTestCase {
+
+  /**
+   * Returns the path to the tests directory inside the
+   * Patterns module
+   *
+   */
+  public function getPatternsTestDir() {
+    return realpath('./') . '/' . drupal_get_path('module', 'patterns') . '/tests/';
+  }
+
+  /**
+   * Setups the testing environment.
+   *
+   * Loads the patterns and libraries modules plus all those that are
+   * passed as parameters; skips the Patterns splash screen.
+   *
+   * @param array $user_modules The array of modules to enable
+   * @param bool $first (optional) If TRUE, the Patterns splash
+   *   screen is not skipped.
+   *
+   */
+  public function setUp($user_modules = array(), $first = FALSE) {
+
+    $modules = array('patterns', 'libraries');
+    if (!empty($user_modules)) {
+      if (!is_array($user_modules)) {
+        $user_modules = array($user_modules);
+      }
+      $modules = array_merge($modules, $user_modules);
+      $modules = array_unique($modules);
+    }
+
+    // Enable any modules required for the tests.
+    parent::setUp($modules);
+
+    //fix simpletest error of importing&exporting.
+    //hook_update_N() is in patterns.install, but hook_update_N can only be run by update.php. so I just put the code here. 
+    //by Rui.2013.1.11
+    if(db_table_exists('patterns')) {
+      $uuuid = array(
+        'type' => 'varchar',
+        'length' => 50,
+        'default' => '',
+        'description' => 'Identify patterns and their parent',
+      );
+      db_add_field('patterns', 'uuuid', $uuuid);
+      $author = array(
+        'type' => 'varchar',
+        'length' => 30,
+        'default' => '',
+        'description' => 'pattern\'s author',
+      );
+      db_add_field('patterns', 'author', $author);
+    }
+ 
+    if (!$first) {
+      // 'patterns_first_install' => PATTERNS_FIRST_INSTALL in
+      // includes/variables.inc (may be not yet loaded)
+      variable_set('patterns_first_install', FALSE);
+      // TODO: Can we set the flag FIRST_INSTALL to FALSE before enabling patterns
+      // so that we don't need to rebuild the menu
+      menu_rebuild();
+    }
+		variable_set('patterns_save_file', 'public:///patterns_tests-' . rand(0,1000000)); 
+    // TODO: how to ensure that Spyc is installed?
+
+    // Create users.
+    $this->pat_user = $this->drupalCreateUser(array('administer patterns'));
+    // Login the patterns administrator.
+    $this->drupalLogin($this->pat_user);
+  }
+
+  /**
+   * Loads a pattern file and runs it.
+   *
+   * @param mixed $filename The full name (name + extension) of
+   *   the file to run
+   * @param mixed $name An alphanumeric name or short sentence
+   *   to be displayed next to the test results
+   * @param mixed $dir The path of the directory containing the
+   *   pattern file
+   * @param mixed $format (optional) If set, forces the use of
+   *   a specific format
+   *
+   * @see quickRun()
+   */
+  function runFile($filename, $name, $dir, $format = NULL) {
+    $patterntext = $this->loadPattern($filename, $dir);
+    if (is_null($format)) {
+      $path_parts = pathinfo($filename);
+      $format = $path_parts['extension'];
+    }
+    $this->quickRun($patterntext, $name);
+  }
+
+  /**
+   * Runs a pattern through the Quick Run interface and
+   * checks the output screen for errors messages.
+   *
+   * @param mixed $pattern A string representation of a pattern
+   * @param mixed $name An alphanumeric name or short sentence
+   *   to be displayed next to the test results
+   * @param mixed $format (optional) The format of the pattern
+   *   to be executed. Defaults 'yaml' for historical reasons
+   * @param bool $valid (optional) If TRUE, it assumed that the executed
+   *   pattern should not raise errors. Defaults TRUE
+   * @param mixed $mode (optional) The execution mode of the pattern
+   *   Defaults 'php'
+   */
+  function quickRun($pattern, $name, $format = 'yaml', $valid = TRUE, $mode = 'php') {
+    // Fill the form.
+    $edit = array();
+    $edit['format'] = $format;
+    $edit['mode'] = $mode;
+    $edit['content'] = $pattern;
+
+    // Post the form.
+    $this->drupalPost('admin/patterns/quickrun', $edit, t('Run'));
+
+    if ($valid) {
+      // Check for a valid syntax run.
+      $this->assertUniqueText(t('ran successfully.', array('@pattern' => $name)), t('Valid pattern runs without errors.'));
+      $this->assertNoText(t('Error(s) while processing pattern:'), t('Valid pattern does not produce errors.'));
+    }
+    else {
+      $this->assertUniqueText(t('Error(s) while processing pattern:'), t('Invalid pattern produces errors.'));
+      $this->assertNoText(t('ran successfully.', array('@pattern' => $name)), t('Invalid pattern does not run without errors.'));
+    }
+
+  }
+
+  /**
+   * Scans a directory for patterns files, and executes them.
+   *
+   * @param mixed $dir The path to the directory to scan
+   *
+   */
+  function runDir($dir) {
+
+    if (!file_exists($dir) || !is_readable($dir)) {
+      $this->error(t('Directory not found or not readable: ' . $dir));
+      return FALSE;
+    }
+
+    if (!$handle = opendir($dir)) {
+      $this->error(t('Error opening directory') . ' ' . $dir);
+      return FALSE;
+    }
+
+    while (false !== ($file = readdir($handle))) {
+      $path_parts = pathinfo($file);
+      $format = $path_parts['extension'];
+      if (!patterns_parser_exists($format)) {
+        continue;
+      }
+
+      $this->runFile($file, 'Running' . ' ' . $file, $dir);
+    }
+    closedir($handle);
+  }
+
+  /**
+   * Loads all the pattern files from a directory
+   * and executes a callback on each parsed pattern.
+   *
+   * The parser is chosen based on the extension of the files
+   * in the folder.
+   *
+   * The directory must be readable.
+   *
+   * @param $mixed $dir The directory in which looking for
+   *   patterns files
+   * @param $mixed $callback The callback function to be
+   *   passed to call_user_func. The argument of the callback
+   *   is the array representation of a pattern, as loaded by
+   *   patterns_parser_load()
+   *
+   */
+  function callbackOnDir($dir, $callback) {
+
+    if (empty($callback)) {
+      $this->error(t('No callback passed to runPatternsFromDir.'));
+      return FALSE;
+    }
+
+    if (!is_callable($callback, TRUE)) {
+      $this->error(t('Callback to runPatternsFromDir is not callable.'));
+      return FALSE;
+    }
+
+    if (!file_exists($dir) || !is_readable($dir)) {
+      $this->error(t('Directory not found or not readable: ' . $dir));
+      return FALSE;
+    }
+
+    if (!$handle = opendir($dir)) {
+      $this->error(t('Error opening directory') . ' ' . $dir);
+      return FALSE;
+    }
+
+    while (false !== ($entry = readdir($handle))) {
+      $path_parts = pathinfo($entry);
+      $format = $path_parts['extension'];
+
+      if (!patterns_parser_exists($format)) {
+        continue;
+      }
+
+      $pattern = patterns_parser_load($dir . $entry, $format);
+      if (empty($pattern)) {
+        $this->fail(t('Error while loading') . ' ' . $entry);
+        continue;
+      }
+      call_user_func($callback, $pattern);
+    }
+    closedir($handle);
+
+  }
+
+
+  /**
+   * Loads a pattern file into a string from a directory.
+   *
+   * @param mixed $filename The name of the pattern file
+   * @param mixed $dir The directory where the pattern file
+   *   is located.
+   */
+  function loadPattern($filename, $dir) {
+    if (!file_exists($dir) || !is_readable($dir)) {
+      $this->error(t('Directory not found or not readable: ' . $dir));
+      return FALSE;
+    }
+    return file_get_contents( $dir . $filename);
+  }
+
+  /**
+   * Checks if during the Web execution fopenurl is enabled.
+   *
+   * Notice: patterns_utils_is_fopenurl_enabled cannot be used
+   * because it does not work with drush (returns the value of cli).
+   *
+   */
+  public function isFopenurlEnabled() {
+    // View patterns list.
+    $this->drupalGet('admin/patterns/import/url');
+    $this->assertResponse(200);
+    // TODO: this text should not appear if and only if fopen is enabled for URLs.
+    return $this->assertNoText(t('Feature disabled:'), t('fopenurl is enabled.'));
+  }
+
+}

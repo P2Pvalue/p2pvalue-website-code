@@ -1,0 +1,115 @@
+# YAML Content Create Paper Pattern
+# QScience
+
+info:
+  title: Paper,Book,Institution,Journal,Event(content types create)
+  description: 'Creates following content types  Paper,Book,Institution,Journal,Event'
+  author: QScience
+  category: Content
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+  
+actions:
+  - create:
+      tag: content_type
+      name: Paper
+      type: paper
+      description:  create a content type that can describe paper
+      title_label: Paper Content Type
+      node_preview: 1
+      help: create a content type that can describe paper
+      node_options:
+        - status
+        - promote
+        - sticky
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: author
+      label: Author
+      type: text
+      widget: text_textfield
+      weight: 1
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: title
+      label: Title
+      type: text
+      widget: text_textfield
+      weight: 2
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: pub_date
+      label: Pub Date
+      type: text
+      widget: text_textfield
+      weight: 3
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: journal
+      label: Journal
+      type: text
+      widget: text_textfield
+      weight: 4
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: isbn
+      label: ISBN
+      type: text
+      widget: text_textfield
+      weight: 5
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: issn
+      label: ISSN
+      type: text
+      widget: text_textfield
+      weight: 6
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: doi
+      label: DOI
+      type: text
+      widget: text_textfield
+      weight: 7
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: note
+      label: Note
+      type: text_with_summary
+      widget: text_textarea_with_summary
+      weight: 8
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: external_url
+      label: external URL
+      type: text
+      widget: text_textfield
+      weight: 9
+  - create:
+      tag: instance
+      entity: node
+      bundle: paper
+      name: abstract
+      label: Abstract
+      type: text_with_summary
+      widget: text_textarea_with_summary
+      weight: 10

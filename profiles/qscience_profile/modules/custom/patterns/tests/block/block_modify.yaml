@@ -1,0 +1,44 @@
+# YAML Block Pattern
+# QScience
+
+info:
+  title: Blocks (modify)
+  description: Modifies a module-provided and a custom block.
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+modules:
+  - block
+block:
+  - 
+    modify:
+      tag: block
+      module: user
+      delta: online
+      theme: seven
+      status: 1
+      weight: -2
+      region: content
+      custom: 1
+      visibility: 1
+      pages: '<front>'
+      title: Who's online (new title)
+      cache: -1
+  - 
+    modify:
+      tag: block
+      module: block
+      delta: 1
+      theme: bartik
+      status: 1
+      weight: 4
+      region: header
+      custom: 1
+      visibility: 1
+      pages: '<front>'
+      title: Test title2
+      cache: -1
+

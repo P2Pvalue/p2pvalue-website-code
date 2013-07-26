@@ -1,0 +1,10 @@
+name = Patterns Export
+description = Experimental. Extends Patterns and enables automatic extraction of the web site configuration
+dependencies[] = patterns
+dependencies[] = macro
+
+core = 7.x
+version = 7.x-2.x-dev
+build = EXPORT-7057
+package = Patterns
+php = 5.2

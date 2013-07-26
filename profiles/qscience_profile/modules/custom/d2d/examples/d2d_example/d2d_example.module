@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * @file
+ * Example module for D2D.
+ */
+
+require_once 'includes/d2d_example.info.inc';
+require_once 'includes/d2d_example.remote_control.inc';
+
+/**
+ * Implements hook_menu_alter().
+ */
+function d2d_example_menu_alter(&$items) {
+  $items['admin/d2d/d2d_example'] = array(
+    'title' => 'Examples',
+    'page callback' => 'd2d_example_info_show',
+    'access arguments' => array('administer d2d'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 85,
+  );
+  $items['admin/d2d/d2d_example/info'] = array(
+    'title' => 'Friends Info',
+    'page callback' => 'd2d_example_info_show',
+    'access arguments' => array('administer d2d'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['admin/d2d/d2d_example/remote_control'] = array(
+    'title' => 'Remote Control',
+    'page callback' => 'd2d_example_remote_control',
+    'access arguments' => array('administer d2d'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_d2d_secure_rpc().
+ */
+function d2d_example_d2d_secure_rpc() {
+  $methods = array();
+  $methods['d2d_example_remote_control'] = array(
+    'arguments' => array('code' => 'is_string'),
+    'callback' => 'd2d_example_srpc_remote_control',
+    'description' => 'runs code on remote instance',
+  );
+  $methods['d2d_example_info'] = array(
+    'arguments' => array(),
+    'callback' => 'd2d_example_srpc_info',
+    'description' => 'returns information about this instance',
+  );
+  return $methods;
+}

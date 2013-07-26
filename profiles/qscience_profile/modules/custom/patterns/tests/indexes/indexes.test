@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * @file
+ * General SimpleTests for Patterns. Also, a Pattern running base class which uses QuickRun.
+ */
+
+class PatternsIndexesTestCase extends PatternsTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Indexes test',
+      'description' => 'Tests whether tagmodules and moduletags behave as expected.',
+      'group' => 'Patterns',
+    );
+  }
+
+  public function setUp($user_modules = array(), $first = FALSE) {
+
+    $modules = array('patterns_components', 'pathauto', 'date');
+
+    // Enable any modules required for the tests.
+    parent::setUp($modules);
+
+    // TODO: how to ensure that Spyc is installed?
+
+    // Create users.
+    $this->adm_user = $this->drupalCreateUser(array('administer site configuration'));
+    $this->pat_user = $this->drupalCreateUser(array('administer patterns'));
+    $this->std_user = $this->drupalCreateUser(array());
+
+
+  }
+
+  public function testTagmodules() {
+  	$tagmodules = patterns_tagmodules_get_index(NULL, TRUE, TRUE);
+  	
+  	$this->assertNotNull($tagmodules, 'Tagmodules should not be NULL');
+  	$nc = $this->countComponents();
+  	$this->assertTrue((count($tagmodules) >= $nc), 'Tagmodules should have at least one tag per component');
+  	
+  	
+	}
+	
+  public function testModuletags() {
+  	$moduletags = patterns_moduletags_get_index(NULL, TRUE, TRUE);
+  	
+  	$components = patterns_io_list_components(TRUE);
+  	$nc = count($components);
+  
+  	$this->assertNotNull($moduletags, 'Moduletags index should not be NULL');
+  	$this->assertEqual(count($moduletags), $nc, t('Moduletags index should have length equal of the number of available components'));
+  	
+  	$nc = $this->countComponents();
+  	
+  	$this->assertEqual(count($moduletags), $nc, t('Moduletags index should have length %nc, %found found', array('%nc' => $nc, '%found' => count($moduletags))));
+		
+	}
+	
+	private function countComponents() {
+		$nc = 9;
+  	if (patterns_utils_is_module_enabled('date')) {
+  		$nc++;
+  	}
+  	if (patterns_utils_is_module_enabled('pathauto')) {
+  		$nc++;
+  	}
+  	return $nc;
+	}
+}

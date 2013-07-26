@@ -1,0 +1,59 @@
+<?php
+
+/**
+ * @file
+ * A few tests checking the permissions.
+ */
+
+class D2DTestCase extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'General test',
+      'description' => 'Test permissions etc.',
+      'group' => 'D2D',
+    );
+  }
+  function setUp() {
+    parent::setUp(
+      'd2d'
+    );
+//    $this->adm_user = $this->drupalCreateUser(array('administer site configuration'));
+    $this->d2d_user = $this->drupalCreateUser(array('administer d2d'));
+    $this->std_user = $this->drupalCreateUser(array());
+  }
+
+  /**
+   * Login users, load the config page.
+   */
+  function testD2D() {
+    // Login the d2d admin.
+    $this->drupalLogin($this->d2d_user);
+    $this->verifyAccess(200);
+
+    // Login a regular user.
+    $this->drupalLogin($this->std_user);
+    $this->verifyAccess(403);
+  }
+
+  /**
+   * Verify the logged in user has the desired access to the various menu nodes.
+   *
+   * @param integer $response HTTP response code.
+   */
+  private function verifyAccess($response = 200) {
+    // View config.
+    $this->drupalGet('admin/d2d');
+    $this->assertResponse($response);
+    if ($response == 200) {
+      $this->checkPage();
+    }
+  }
+
+  private function checkPage() {
+    $this->assertNoText(t('Error'), t('There should be no errors.'));
+    /*
+    $this->assertNoText(t('Warning'), t('There should be no warnings.'));
+    $this->assertNoText(t('Notice'), t('There should be no notices.'));
+    */
+  }
+}

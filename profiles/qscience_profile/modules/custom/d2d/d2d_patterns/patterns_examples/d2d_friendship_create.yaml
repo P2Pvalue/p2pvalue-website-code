@@ -1,0 +1,22 @@
+info:
+  title: D2D friendships CREATE
+  category: D2D
+  description: Friendships example
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_friendship:
+  - 
+    create:
+      tag: d2d_friendship
+      d2d_id: 8AAE7EAEB0D53A63EFFB1ED107F829D6
+  - 
+    create:
+      tag: d2d_friendship
+      d2d_id: 433739DD30328CD11C49580DD661A5B9

@@ -1,0 +1,15 @@
+<pattern>
+  <info>
+    <title>Enable a module</title>
+    <description>Enable the forum module (XML Example)</description>
+    <author>QScience</author>
+    <category>System</category>
+    <version>1.0</version>
+    <core>7.x</core>
+  </info>
+  <actions>
+    <create tag="module">
+      <value>forum</value>
+    </create>
+  </actions>
+</pattern>

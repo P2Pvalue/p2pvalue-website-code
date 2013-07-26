@@ -1,0 +1,24 @@
+info:
+  title: D2D permissions CREATE
+  category: D2D
+  description: Permissions example
+  version: 1.0
+  core: x.y
+  author: root
+  author_email: me@me.com
+  author_website: http://patterns.inn.ac
+
+modules:
+  - d2d
+
+d2d_permission:
+  - 
+    create:
+      tag: d2d_permission
+      group: friends
+      method: d2d_get_public_key
+  - 
+    create:
+      tag: d2d_permission
+      group: friends
+      method: d2d_list_permissions

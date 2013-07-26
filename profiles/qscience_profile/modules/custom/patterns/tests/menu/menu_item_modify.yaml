@@ -1,0 +1,22 @@
+# YAML Forms Pattern
+# QScience
+
+info:
+  title: Edit menu items
+  description: Based on http://drupal.org/node/408952
+  author: QScience
+  category: Menu
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+actions:
+
+  - modify:
+      tag: menu_item
+      mlid:361
+      menu_name: menu-footer-links
+      link_path:http://123.com
+      link_title: menu link title changed
+      disable:1
+

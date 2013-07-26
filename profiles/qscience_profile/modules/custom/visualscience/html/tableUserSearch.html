@@ -1,0 +1,34 @@
+<div style="display:inline-block;width:80%;overflow-x:scroll;">
+	<table id="visualscience-user_list-result-{{tabId}}" class="vs-userlist-table tablesorter sticky-header">
+		<thead>
+			<tr>	
+				<th style="min-width:35px;" onclick="vsSearch.selectAllBoxes({{tabId}})">
+					<input type="checkbox" id="user-list_master_checkbox-{{tabId}}" class="form-checkbox" title="Select all rows in this table" onclick="vsSearch.selectAllBoxes({{tabId}})">
+				</th>
+				{{#each header}}
+				<th style="min-width:35px;" class="header">
+					{{{this}}}
+				</th>
+				{{/each}}
+			</tr>
+		</thead>
+		<tbody>
+			{{#each users}}
+
+			<tr class="{{type}} clickable clickToSelect">
+				<td>
+					<div class="form-item form-type-checkbox form-item-list-{{this.id}}">
+						<input id="user_list-list-{{tabId}}" type="checkbox" name="list[{{this.id}}]" value="{{this.id}}" class="form-checkbox">
+					</div>
+				</td>
+				{{#each fields}}
+				<td>
+					{{this}}
+				</td>
+				{{/each}}
+			</tr>
+			{{/each}}
+		</tbody>
+	</table>
+	<p align="center"><i>First {{nbEntries}} results only</i></p>
+</div>

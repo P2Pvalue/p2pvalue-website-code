@@ -1,0 +1,9 @@
+name = D2D
+description = "A module to establish and manage friendship between Drupal instances and to make secure remote procedure calls on that instances"
+package = D2D
+core = 7.x
+php = 5.3
+
+files[] = d2d.module
+files[] = tests/d2d.test
+files[] = tests/static.test

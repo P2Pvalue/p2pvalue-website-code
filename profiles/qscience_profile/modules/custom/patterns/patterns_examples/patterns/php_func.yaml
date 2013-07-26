@@ -1,0 +1,35 @@
+# YAML PHP Function Pattern
+# QScience
+
+info:
+  title: Execute PHP functions
+  description: Runs a simple dvm function from the Devel module.
+  author: QScience
+  category: System
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+
+modules:
+  - devel
+
+actions: 
+  - create:
+      tag: call_php_func
+      function: dvm
+      arguments:
+          - array:
+              - abcString
+              - defArray:
+                  - item1
+                  - item2
+
+# TODO: create an example
+#  - create:
+#      tag: call_php_func
+#      function:
+#      arguments:
+#      type: inc
+#      module: my_module
+#      name: include_name
+

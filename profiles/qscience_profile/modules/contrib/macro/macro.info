@@ -1,0 +1,13 @@
+name = Macro
+description = "Experimental port to DR7: Allows administrators to record (export) and playback (import) form submissions."
+package = Development
+core = 7.x
+
+dependencies[] = libraries
+
+; Information added by drupal.org packaging script on 2012-08-26
+version = "7.x-1.0-alpha2"
+core = "7.x"
+project = "macro"
+datestamp = "1345967549"
+

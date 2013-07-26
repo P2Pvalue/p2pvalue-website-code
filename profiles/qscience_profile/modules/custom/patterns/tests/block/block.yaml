@@ -1,0 +1,30 @@
+# YAML Block Pattern
+# QScience
+
+info:
+  title: Blocks (create)
+  description: Inserts a custom block.
+  author: QScience
+  category: Block
+  version: 1.0
+  core: 7.x
+  author_website: http://qlectives.eu/
+modules:
+  - block
+block:
+  - 
+    create:
+      tag: block
+      module: block
+      body: Here comes the body text.
+      info: Test custom block
+      format: filtered_html
+      theme: seven
+      status: 1
+      weight: 4
+      region: content
+      custom: 1
+      visibility: 1
+      pages: '<front>'
+      title: Test title
+      cache: -1
