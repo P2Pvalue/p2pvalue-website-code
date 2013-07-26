@@ -1,0 +1,14 @@
+FB Likebox: March 26, 2013
+Applied changes in the 7.x-1.x-dev branch to make the provided patterns compatible with the new version of Patterns (7.x-2.x).
+
+FB Likebox: July 19, 2012
+Applied changes in the 7.x-1.x-dev branch to make the module settings exportable in patterns (http://drupal.org/project/patterns).
+
+FB Likebox: July 18, 2012
+Created submodule in the 7.x-1.x-dev branch to make the module compatible with patterns (http://drupal.org/project/patterns).
+
+FB Likebox: November 22, 2011
+Issue #1348360 by lbirba: Applied patch fb_likebox_1348360.patch that solves a syntax error at fb_likebox.tpl.php that prevents to display the frame properly, by lbirba.
+
+FB Likebox: October 19, 2011
+Issue #1257326 by drozas: Converting 6.x-1.3 version to Drupal 7. Everything ready but block config settings validation.

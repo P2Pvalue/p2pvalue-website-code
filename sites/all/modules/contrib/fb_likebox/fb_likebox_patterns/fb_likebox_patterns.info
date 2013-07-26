@@ -1,0 +1,14 @@
+name = Facebook Likebox Patterns
+description = Enables compatibility of Facebook Likebox with patterns module.
+core = 7.x
+files[] = fb_likebox_patterns.module
+dependencies[] = fb_likebox
+dependencies[] = patterns (>= 7.x-2.x)
+package = FB Likebox
+
+; Information added by drupal.org packaging script on 2013-06-21
+version = "7.x-1.8"
+core = "7.x"
+project = "fb_likebox"
+datestamp = "1371803456"
+

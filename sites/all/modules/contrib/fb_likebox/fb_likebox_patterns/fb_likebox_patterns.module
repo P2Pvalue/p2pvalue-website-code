@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * @file
+ * Submodule to enable compatibility of Facebook Likebox with patterns module.
+ * The current version makes use of the system pattern component, therefore it
+ * does not really call drupal_form_submit() for the block_admin_configure $form_id,
+ * and the values will not be refreshed in that form (although the changes will be
+ * applied since they are taken from get/set variables).
+ */
+
+/**
+ * Implements hook_patterns().
+ */
+function fb_likebox_patterns($data = NULL) {
+  $actions['fb_likebox'] = array(
+      PATTERNS_INFO   => t('Settings for Facebook Likebox module'),
+      PATTERNS_MODIFY => array('variables_execute'),
+      PATTERNS_EXPORT => array(PATTERNS_EXPORT_ALL => 'fb_likebox_patterns_export_all_settings'),
+  );
+  return $actions;
+}
+
+/**
+ * Implements function to export the values of the block configuration form.
+ * In this case we do not use the patterns_api_extract_actions()
+ * function, and we return directly the array with the action values
+ * ready to be fetched.
+ * @param $args
+ * @param $result
+ */
+function fb_likebox_patterns_export_all_settings($args = NULL, &$result = NULL) {
+  $result = array();
+
+  //Prepare a modify action with all the fb_likebox variables
+  $variables_action = array('tag' => 'variables');
+  $variables_action[] = array('name' => 'fb_likebox_url', 'value' => variable_get('fb_likebox_url', 'http://www.facebook.com/wikisaber.es'));
+  $variables_action[] = array('name' => 'fb_likebox_colorscheme', 'value' => variable_get('fb_likebox_colorscheme', 'light'));
+  $variables_action[] = array('name' => 'fb_likebox_header', 'value' => variable_get('fb_likebox_header', 'true'));
+  $variables_action[] = array('name' => 'fb_likebox_stream', 'value' => variable_get('fb_likebox_stream', 'true'));
+  $variables_action[] = array('name' => 'fb_likebox_show_faces', 'value' => variable_get('fb_likebox_show_faces', 'true'));
+  $variables_action[] = array('name' => 'fb_likebox_scrolling', 'value' => variable_get('fb_likebox_scrolling', 'no'));
+  $variables_action[] = array('name' => 'fb_likebox_width', 'value' => variable_get('fb_likebox_width', '292'));
+  $variables_action[] = array('name' => 'fb_likebox_height', 'value' => variable_get('fb_likebox_height', '556'));
+  $variables_action[] = array('name' => 'fb_likebox_show_border', 'value' => variable_get('fb_likebox_show_border', 'true'));
+  $variables_action[] = array('name' => 'fb_likebox_force_wall', 'value' => variable_get('fb_likebox_force_wall', 'false'));
+  $result[] = array(PATTERNS_MODIFY => $variables_action);
+  return $result;
+}
+
+/**
+ * Implements hook_patterns_directory().
+ */
+function fb_likebox_patterns_directory() {
+  return drupal_get_path('module', 'fb_likebox_patterns') . '/patterns/';
+}
