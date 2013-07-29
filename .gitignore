@@ -3,6 +3,9 @@
 # Commenting temporarily
 #sites/*/*settings*.php
 
+#Ignore Eclipse project
+.project/
+
 # Ignore paths that contain generated content.
 #cache/
 #files/
