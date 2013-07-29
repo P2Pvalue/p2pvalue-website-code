@@ -1111,7 +1111,7 @@ h3.comment-title a{
 }
 
 
-.view .date-nav-wrapper .date-prev {
+/*.view .date-nav-wrapper .date-prev {
     background: none repeat scroll 0 0 #DFDFDF;
     border-radius: 5px 0 0 5px;
     float: none;
@@ -1124,4 +1124,10 @@ h3.comment-title a{
     top: 0;
     width: auto;
     z-index: 1;
+}*/
+
+.view .date-nav-wrapper .date-heading h3 {
+    font-size: 19px;
+    line-height: 30px;
+    margin-right: 30px;
 }
