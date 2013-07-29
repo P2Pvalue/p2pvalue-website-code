@@ -5,6 +5,8 @@
 
 #Ignore Eclipse project
 .project
+.settings
+.buildpath
 
 # Ignore paths that contain generated content.
 #cache/
