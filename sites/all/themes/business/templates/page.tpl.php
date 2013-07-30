@@ -148,9 +148,10 @@
   <div id="copyright">
     <?php if (theme_get_setting('footer_copyright')): ?>
       <?php print t('Copyright'); ?> &copy; <?php echo date("Y"); ?>, <?php print $site_name; ?>.
+      <?php print t('<br />Disclaimer: The views expressed in this website do not necessarily reflect the views of the EC.');?>
     <?php endif; ?>
     <?php if (theme_get_setting('footer_credits')): ?>
-      <span class="credits"><?php print t('Designed by'); ?>  <a href="http://www.devsaran.com">Devsaran</a>.</span>
+      <span class="credits"><?php print t('Powered by'); ?>  <a href="http://qscience.inn.ac" target="_blank">QScience</a>.</span>
     <?php endif; ?>
   </div>
   <?php endif; ?>
