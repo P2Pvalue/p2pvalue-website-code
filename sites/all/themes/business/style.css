@@ -1133,3 +1133,12 @@ h3.comment-title a{
     line-height: 30px;
     margin-right: 30px;
 }
+
+#user-picture {
+  float:right;
+  padding-left:15px;
+}
+
+#field_more_information_header {
+	font-weight:bold;
+}
