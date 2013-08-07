@@ -1,0 +1,76 @@
+<?php
+
+/**
+ * @file
+ * Restricts viewing user profiles based on user roles
+ */
+
+/**
+ * Implements hook_permission().
+ *
+ * Provide permissions per role to be viewed
+ */
+function view_profiles_perms_permission() {
+  $perms = array();
+  $roles = user_roles(TRUE);
+  // remove authenticated role
+  unset($roles[DRUPAL_AUTHENTICATED_RID]);
+  if (count($roles) > 0) {
+    foreach ($roles as $rid => $role_name) {
+      $perms += view_profiles_perms_permission_name($role_name);
+    }
+  }
+
+  return $perms;
+}
+
+/**
+ * Helper function to build the permission name
+ */
+function view_profiles_perms_permission_name($role_name) {
+  return array(
+    "access $role_name profiles" => array(
+      'title' => t("Access to %role_name profiles", array('%role_name' => $role_name)),
+      'description' => t('Grant access to user profiles to this role'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Takes over the access callback for user profiles.
+ */
+function view_profiles_perms_menu_alter(&$items) {
+  $items['user/%user']['access callback'] = 'view_profiles_perms_access';
+}
+
+/**
+ * Access callback for user profiles.
+ */
+function view_profiles_perms_access($account = NULL) {
+  global $user;
+  if (!isset($account)) {
+    $account = $user;
+  }
+
+  // First check user module's access
+  $access = user_view_access($account);
+  if (!$access) {
+    // Check our own permissions.
+    foreach ($account->roles as $rid => $role_name) {
+      // Annonymous and authenticated user roles get skipped
+      if ($rid != DRUPAL_ANONYMOUS_RID && $rid != DRUPAL_AUTHENTICATED_RID) {
+        $perm_name = view_profiles_perms_permission_name($role_name);
+        if (!empty($perm_name)) {
+          $perm_name = key($perm_name);
+          $access = user_access($perm_name);
+          if ($access === TRUE) {
+            break;
+          }
+        }
+      }
+    }
+  }
+  return $access;
+}
