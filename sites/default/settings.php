@@ -210,6 +210,8 @@
  *   );
  * @endcode
  */
+ 
+//@TO-DO: This is just for testing purposes, use a proper user/pass during deployment.
 $databases = array (
   'default' => 
   array (
