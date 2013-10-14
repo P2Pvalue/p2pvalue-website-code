@@ -217,9 +217,9 @@ $databases = array (
   array (
     'default' => 
     array (
-      'database' => 'p2pvalue',
-      'username' => 'p2pvalue',
-      'password' => 'p2pvalue',
+      'database' => 'p2pvalue2',
+      'username' => 'p2pvalue2',
+      'password' => 'p2pvalue2',
       'host' => 'localhost',
       'port' => '',
       'driver' => 'mysql',
