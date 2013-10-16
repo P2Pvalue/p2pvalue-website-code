@@ -147,7 +147,7 @@
   <div class="clear"></div>
   <div id="copyright">
     <?php if (theme_get_setting('footer_copyright')): ?>
-      <?php print t('Copyright'); ?> &copy; <?php echo date("Y"); ?>, <?php print $site_name; ?>.
+      <?php print t('Copyright'); ?> &copy; <?php echo date("Y"); ?>, P2PValue.
       <?php print t('<br />Disclaimer: The views expressed in this website do not necessarily reflect the views of the EC.');?>
     <?php endif; ?>
     <?php if (theme_get_setting('footer_credits')): ?>
