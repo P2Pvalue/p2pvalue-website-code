@@ -146,10 +146,8 @@
   <?php if (theme_get_setting('footer_copyright') || theme_get_setting('footer_credits')): ?>
   <div class="clear"></div>
   <div id="copyright">
-    <?php if (theme_get_setting('footer_copyright')): ?>
-      <?php print t('Copyright'); ?> &copy; <?php echo date("Y"); ?>, P2PValue.
-      <?php print t('<br />Disclaimer: The views expressed in this website do not necessarily reflect the views of the EC.');?>
-    <?php endif; ?>
+      The contents of this website are licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/3.0/"> Creative Commons Attribution License</a>.
+      <br />Disclaimer: The views expressed in this website do not necessarily reflect the views of the EC.
     <?php if (theme_get_setting('footer_credits')): ?>
       <span class="credits"><?php print t('Powered by'); ?>  <a href="http://qscience.inn.ac" target="_blank">QScience</a>.</span>
     <?php endif; ?>
