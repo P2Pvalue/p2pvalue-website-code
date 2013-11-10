@@ -370,6 +370,7 @@ h4 a {
   color: #666;
   padding: 1.5em 15px;
   text-decoration: none;
+  font-size: 12px;
 }
 
 #main-menu .menu a.active {
