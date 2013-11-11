@@ -344,7 +344,7 @@ h4 a {
 
 #main-menu .menu li:hover ul {
   left: 0;
-  top: 4em; /* match top ul list item height */
+  top: 3.2em; /* match top ul list item height */
   z-index: 99;
 }
 
