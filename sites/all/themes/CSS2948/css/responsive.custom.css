@@ -1,0 +1,133 @@
+/*
+ * responsive.custom.css is for custom media queries that are not set via the
+ * theme settings, such as cascading media queries.
+ *
+ * By default all the other responsive stylesheets used in Adaptivetheme use a
+ * "stacking method", however cascading media queries use a waterfall method so
+ * you can leverage the cascade and inheritance for all browsers that support
+ * media queries, regardless of screen size.
+ *
+ * @SEE http://zomigi.com/blog/essential-considerations-for-crafting-quality-media-queries/#mq-overlap-stack
+ *
+ * NOTE: this file loads by default, to disable got to your theme settings and
+ * look under the "CSS" settings tab.
+ */
+/*
+ * Really small screens and up
+ */
+/* @media only screen and (min-width: 220px) {} */
+/*
+ * Smartphone sizes and up
+ */
+/* @media only screen and (min-width: 320px) {} */
+/*
+ * Smartphone sizes and down
+ */
+@media only screen and (max-width: 480px) {
+  /* 
+   * Float Region blocks example:
+   * In smaller screen sizes we can remove the float and widths so all blocks
+   * stack instead of displaying horizonally. The selector used here is an
+   * "attribute selector" which will match on any float block class. Use your
+   * inspector or Firebug to get the classes from the page output if you need
+   * more granular control over block alignment and stacking.
+   * 
+   * "Float Region blocks" is an extension for floating blocks in regions, see
+   * your themes appearance settings, under the Extensions tab.
+   */
+  .region[class*="float-blocks"] .block {
+    float: none;
+    width: 100%;
+  }
+}
+/*
+ * Tablet sizes and up
+ */
+/* @media only screen and (min-width: 768px) {} */
+/*
+ * Desktops/laptops and up
+ */
+/* @media only screen and (min-width: 1025px) {} */
+
+
+/*desktop*/
+
+@media only screen and (max-width: 768px) {
+    
+    
+    .region-sidebar-second .region-inner{ padding-left: 5%;}
+    .form-item input{ border-radius: 0 !important;}
+    .container{ width: 98%; margin: 0 auto;}
+    #menu-bar .menu a{ padding:5px 0.5em 5px 1em;}
+    #menu-bar .menu li .sf-sub-indicator{ right: -5px;}
+} 
+@media only screen and (max-width: 360px) {
+    
+    #menu-bar #block-search-form{ float: none !important;}
+    
+     #menu-bar > nav{width:98% !important; margin: 0 auto; display: block;}
+    .region-leaderboard .block h2{ position: relative; top: -11px;}
+    .region-leaderboard{ text-align: center;}
+    .region-leaderboard .block h2,.region-leaderboard .block,.region-leaderboard .block .block-content{ display: inline-block; float: none;}
+    #header{ text-align: center;}
+      .form-item input{ border-radius: 0 !important;}
+    #menu-bar{ border: 0;}
+    #menu-bar #block-search-form{ padding-top: 10px; clear: both; text-align: center; }
+    #menu-bar #block-search-form > form{ border: 1px solid #E2E2E2; display: inline-block; text-align: left;}
+} 
+
+
+
+@media only screen and (min-width:767px){
+    
+    #header #branding{ float: left; margin: 0; width: 20%;}
+#header .region-header{ float: left;float: left;
+    padding-left: 2.5%;
+    padding-top: 60px;
+    width: 76%;}
+
+    
+}
+
+
+@media only screen and (max-width: 480px) {
+    
+    
+    .ui-accordion h2.ui-accordion-header{ font-size: 1.5em;}
+    .ui-accordion-icons h2.ui-accordion-header a{ padding: 5px;}
+    fieldset select{ width: 290px;}
+    fieldset{ max-width: 98%; padding-left: 0; padding-right: 0;}
+    #edit-timezone > div{ overflow: hidden; max-width: 100%;}
+    fieldset,input,.confirm-parent, .password-parent,div,li,ul,select{ max-width: 100%;}
+    #main-content{ margin-left: 10px; margin-right: 10px; padding: 0;}
+    .container{ width: 98%; padding: 0 1%;}
+    
+#menu-bar > nav{ width: 49%;}
+#menu-bar > nav select{ font-size: 1.4em; width: 100%;}
+    .region-sidebar-second .region-inner{ padding: 0;}
+.site-info .data-section,.site-info .com-section{ width: 100%; float: none;}    
+    
+.site-info .data-section{
+      width: 100%;
+      float: none;
+  }
+  
+  .site-info .com-section{
+        width: 100%;
+      float: none;
+  }
+  
+
+  .region-footer p,.site-info .data-section p{
+      text-align: center;
+  }
+  
+  .region-footer span{
+   margin-right: 0;
+   display: block;
+  }
+    
+    
+}
+
+
