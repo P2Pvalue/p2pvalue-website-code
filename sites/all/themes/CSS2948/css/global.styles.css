@@ -1880,7 +1880,9 @@ table td.mini, table th.mini, table.mini td.week{ padding: 4px 14px 9px 0;}
 .breadcrumb a{  color: #a6a6a6;}
 .breadcrumb { color:#403e3e; text-transform:uppercase;font-size: 1.1em;}
 table td{ font-size: 1.4em; color: #3e3d3d;}
-table td p,table td span,table td li,table td strong,table td label{ font-size: 1em;}
+table td p{margin-bottom:.5em;}
+.ui-accordion .ui-accordion-header a{ padding:5px;}
+table td p,table td span,table td li,table td strong,table td label{ font-size: 1em !important; line-height:100% !important;}
 input[type='submit'],input[type='button']{ background:#75bde1; color: #fff; font-size: 1.4em; text-transform: uppercase; border:0; padding:8px 4px;}
 form label{ font-size: 1.4em; line-height: 130%; font-weight: 400;}
 form a,form .description{ font-size: 1.4em;}
