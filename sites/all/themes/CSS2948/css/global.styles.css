@@ -1959,3 +1959,4 @@ body{ background: #f9f9f9;}
  .ui-state-active span.ui-selectmenu-status {
     border-right: none;
 }
+.comment .user-picture a img{ width: 62px; height: 62px;}
