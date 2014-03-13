@@ -92,6 +92,7 @@
 
 @media only screen and (max-width: 480px) {
     
+    #comments .comment-content,#comments footer.submitted{ width: 100%; float: none;}
     
     .ui-accordion h2.ui-accordion-header{ font-size: 1.5em;}
     .ui-accordion-icons h2.ui-accordion-header a{ padding: 5px;}
