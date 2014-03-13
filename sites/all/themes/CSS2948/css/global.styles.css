@@ -1799,11 +1799,11 @@ body{ background: #f9f9f9; padding-top: 18px;}
 .region-leaderboard .block  .block-content { float: left;}
 .region-leaderboard .block li{ float: left; list-style: none; margin: 0 10px 0 0;}
 .region-leaderboard .block li a{ display: block; height: 100%;}
-.block .fb{ background: url(../images/fb.png) 0 0 no-repeat; width: 33px; height: 33px;}
+.block .fb{ background: url(../images/fb.png) 0 0 no-repeat; width: 33px; height: 33px !important;}
 .region-leaderboard .block h2{ float: left; line-height: 2.5em; font-size: 1.4em; color: #a6a6a6;font-family: 'daxwideregular';}
-.block .twt{ background: url(../images/twt.png) 0 0 no-repeat; width: 33px; height: 33px;}
-.block .rss{ background: url(../images/rss.png) 0 0 no-repeat; width: 33px; height: 33px;}
-.block .gplus{ background: url(../images/gplus.png) 0 0 no-repeat; width: 33px; height: 33px;}
+.block .twt{ background: url(../images/twt.png) 0 0 no-repeat; width: 33px; height: 33px!important;}
+.block .rss{ background: url(../images/rss.png) 0 0 no-repeat; width: 33px; height: 33px!important;}
+.block .gplus{ background: url(../images/gplus.png) 0 0 no-repeat; width: 33px; height: 33px!important;}
 
 
 #menu-bar{ display: inline-block; width: 100%;border: 1px solid #e2e2e2;}
