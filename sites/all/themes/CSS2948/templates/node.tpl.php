@@ -119,7 +119,7 @@ hide($content['links']);
 
   <?php if(!empty($user_picture) || $display_submitted): ?>
     <footer<?php print $footer_attributes; ?>>
-      <?php print $user_picture; ?>
+      <?php //print $user_picture; ?>
       <p class="author-datetime"><?php print $submitted; ?></p>
     </footer>
   <?php endif; ?>

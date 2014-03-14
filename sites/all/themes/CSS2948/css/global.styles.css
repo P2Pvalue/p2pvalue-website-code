@@ -1798,7 +1798,7 @@ body{ background: #f9f9f9; padding-top: 18px;}
 .region-leaderboard .block ul{ overflow: hidden; margin: 0;}
 .region-leaderboard .block  .block-content { float: left;}
 .region-leaderboard .block li{ float: left; list-style: none; margin: 0 10px 0 0;}
-.region-leaderboard .block li a{ display: block; height: 100%;}
+.region-leaderboard .block li a{ display: block;}
 .block .fb{ background: url(../images/fb.png) 0 0 no-repeat; width: 33px; height: 33px !important;}
 .region-leaderboard .block h2{ float: left; line-height: 2.5em; font-size: 1.4em; color: #a6a6a6;font-family: 'daxwideregular';}
 .block .twt{ background: url(../images/twt.png) 0 0 no-repeat; width: 33px; height: 33px!important;}
@@ -1960,3 +1960,5 @@ body{ background: #f9f9f9;}
     border-right: none;
 }
 .comment .user-picture a img{ width: 62px; height: 62px;}
+
+.field.clearfix:after{ clear: none;}
