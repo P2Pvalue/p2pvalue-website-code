@@ -1962,3 +1962,14 @@ body{ background: #f9f9f9;}
 .comment .user-picture a img{ width: 62px; height: 62px;}
 
 .field.clearfix:after{ clear: none;}
+
+#user-picture{ float: right;}
+#user-profile h1{ font-size: 2.4em; font-weight: normal;text-transform: capitalize;  font-family: verdana,arial,serif; margin: 0;}
+#user-profile h3{ font-size: 1.8em; margin: .5em;font-weight: normal;}
+#field_more_information_header {
+    font-size: 1.4em;
+    font-weight: bold;
+}
+#field_more_information ul{ padding-left: 20px;}
+.region-sidebar-second .view-collaborative-blog-posts li{ list-style: disc;}
+.region-sidebar-second  .ui-widget-content{ font-size: 1em !important;}

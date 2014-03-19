@@ -91,7 +91,7 @@
 
 
 @media only screen and (max-width: 480px) {
-    
+    #user-picture{ float: none;}
     .profile .user-picture{ float: none; width: 100%;}
     #comments .comment-content,#comments footer.submitted{ width: 100%; float: none;}
     
