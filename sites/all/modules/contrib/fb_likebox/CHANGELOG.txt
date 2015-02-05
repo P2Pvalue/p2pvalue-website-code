@@ -1,3 +1,6 @@
+FB Likebox: August 17, 2014
+Issue #2311281: Adding option to add iFrame title attribute
+
 FB Likebox: March 26, 2013
 Applied changes in the 7.x-1.x-dev branch to make the provided patterns compatible with the new version of Patterns (7.x-2.x).
 

@@ -1,5 +1,5 @@
 name = Business
-description = Business is a premium Drupal 7 theme. Please consider a <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=donation%40devsaran%2ecom&lc=US&item_name=Donations-To-Business-Theme&no_note=0&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHostedGuest">Small Donations</a>. <br/>Paypal ID : donation@devsaran.com. Developed by <a href="http://www.devsaran.com">devsaran.com</a>.
+description = Business is a premium Drupal 7 theme. Developed by <a href="http://www.devsaran.com">Devsaran.com</a>.
 core = 7.x
 engine = phptemplate
 stylesheets[all][] = style.css
@@ -43,9 +43,9 @@ settings[slide2_url]  = "node/2"
 settings[slide3_url]  = "node/3"
 
 
-; Information added by drupal.org packaging script on 2012-10-16
-version = "7.x-1.9"
+; Information added by Drupal.org packaging script on 2014-03-21
+version = "7.x-1.11"
 core = "7.x"
 project = "business"
-datestamp = "1350402671"
+datestamp = "1395414857"
 

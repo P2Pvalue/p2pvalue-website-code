@@ -83,7 +83,7 @@
     <nav id="navigation" class="clearfix" role="navigation">
       <div id="main-menu">
         <?php 
-          if (module_exists('i18n')) {
+          if (module_exists('i18n_menu')) {
             $main_menu_tree = i18n_menu_translated_tree(variable_get('menu_main_links_source', 'main-menu'));
           } else {
             $main_menu_tree = menu_tree(variable_get('menu_main_links_source', 'main-menu'));
@@ -195,10 +195,11 @@
   <?php if (theme_get_setting('footer_copyright') || theme_get_setting('footer_credits')): ?>
   <div class="clear"></div>
   <div id="copyright">
-      The contents of this website are licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/3.0/"> Creative Commons Attribution License</a>.
-      <br />Disclaimer: The views expressed in this website do not necessarily reflect the views of the EC.
+    <?php if ($footer_copyright): ?>
+      <?php print $footer_copyright; ?>
+    <?php endif; ?>
     <?php if (theme_get_setting('footer_credits')): ?>
-      <span class="credits"><?php print t('Powered by'); ?>  <a href="http://qscience.inn.ac" target="_blank">QScience</a>.</span>
+      <span class="credits"><?php print t('Designed by'); ?>  <a href="http://www.devsaran.com">Devsaran</a>.</span>
     <?php endif; ?>
   </div>
   <?php endif; ?>

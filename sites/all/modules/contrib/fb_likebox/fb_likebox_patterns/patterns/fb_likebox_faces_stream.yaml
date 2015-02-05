@@ -27,7 +27,7 @@ actions:
       tag: variables
       -
         name: fb_likebox_url
-        value: http://www.facebook.com/wikisaber.es
+        value: https://www.facebook.com/FacebookDevelopers
       -
         name: fb_likebox_colorscheme
         value: light

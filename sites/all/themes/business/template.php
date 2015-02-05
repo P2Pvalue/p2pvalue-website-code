@@ -81,6 +81,23 @@ function business_preprocess_page(&$vars) {
   else {
     $vars['secondary_menu'] = FALSE;
   }
+
+  // Build footer_copyright variable to template.
+  if (theme_get_setting('footer_copyright')) {
+    if ($vars['site_name']) {
+      $vars['footer_copyright'] = t('Copyright &copy; @year, @sitename.',
+        array('@year' => date("Y"), '@sitename' => $vars['site_name'])
+      );
+    }
+    else {
+      $vars['footer_copyright'] = t('Copyright &copy; @year.',
+        array('@year' => date("Y"), '@sitename' => $vars['site_name'])
+      );
+    }
+  }
+  else {
+    $vars['footer_copyright'] = NULL;
+  }
 }
 
 /**

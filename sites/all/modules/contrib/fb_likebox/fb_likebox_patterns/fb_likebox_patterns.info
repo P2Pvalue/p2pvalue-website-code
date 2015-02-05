@@ -6,9 +6,9 @@ dependencies[] = fb_likebox
 dependencies[] = patterns (>= 7.x-2.x)
 package = FB Likebox
 
-; Information added by drupal.org packaging script on 2013-06-21
-version = "7.x-1.8"
+; Information added by Drupal.org packaging script on 2014-08-17
+version = "7.x-1.10"
 core = "7.x"
 project = "fb_likebox"
-datestamp = "1371803456"
+datestamp = "1408277332"
 

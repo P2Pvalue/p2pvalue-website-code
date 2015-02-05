@@ -34,7 +34,7 @@ function fb_likebox_patterns_export_all_settings($args = NULL, &$result = NULL) 
 
   //Prepare a modify action with all the fb_likebox variables
   $variables_action = array('tag' => 'variables');
-  $variables_action[] = array('name' => 'fb_likebox_url', 'value' => variable_get('fb_likebox_url', 'http://www.facebook.com/wikisaber.es'));
+  $variables_action[] = array('name' => 'fb_likebox_url', 'value' => variable_get('fb_likebox_url', 'https://www.facebook.com/FacebookDevelopers'));
   $variables_action[] = array('name' => 'fb_likebox_colorscheme', 'value' => variable_get('fb_likebox_colorscheme', 'light'));
   $variables_action[] = array('name' => 'fb_likebox_header', 'value' => variable_get('fb_likebox_header', 'true'));
   $variables_action[] = array('name' => 'fb_likebox_stream', 'value' => variable_get('fb_likebox_stream', 'true'));

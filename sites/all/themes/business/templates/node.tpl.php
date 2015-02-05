@@ -94,7 +94,7 @@
       </header>
   <?php endif; ?>
 
-  <div class="content <?php print $classes_array['1']; ?>"<?php print $content_attributes; ?>>
+  <div class="<?php print $classes; ?>"<?php print $content_attributes; ?>>
     <?php
       // Hide comments, tags, and links now so that we can render them later.
       hide($content['comments']);
