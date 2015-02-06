@@ -1351,6 +1351,7 @@ ul.action-links li {}
 
 .node ul.links li.comment-new-comments a {}
 
+
 .node ul.links li.blog-sernames-blog a {}
 
 .node ul.links li.print-html a {}
@@ -1835,7 +1836,7 @@ border-bottom: 1px solid #e2e2e2;}
     width: 114px; font-size: 1.3em; height: 27px;}
 
 
-#block-search-form .form-item input{border-left: 1px solid #e2e2e2;border-right: 1px solid #e2e2e2; border-top: 0; border-bottom: 0; border-radius: 0;}
+#block-search-form .form-item input{border-left: 1px solid #e2e2e2;border-right: 1px solid #e2e2e2; border-top: 1px; border-bottom: 1px; border-radius: 0; border-color: #e2e2e2; border-radius: 0; border-style: dotted;}
 #block-search-form{}
 #block-search-form .form-actions input{ background: url(../images/search) 0 0 no-repeat; width: 36px; height: 35px; border: 0; padding: 0; text-indent: -999999em;}
 
