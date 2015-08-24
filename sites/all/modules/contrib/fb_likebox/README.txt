@@ -1,11 +1,17 @@
 -- SUMMARY --
 
 Simple module that provides a block with the latest updates from Facebook for
-the provided account. It is based on the likebox social plugin:
-http://developers.facebook.com/docs/reference/plugins/like-box. The widget
+the provided account. It is based on the Page Plugin:
+https://developers.facebook.com/docs/plugins/page-plugin. The widget
 settings are configurable directly in the block  and they are available for 
 users with 'administer blocks' permission.
 
+-- FROM FACEBOOK LIKEBOX TO PAGE PLUGIN --
+
+Facebook announced the old Facebook Likebox social plugin will be deprecated after 
+the 23th of June 2015. New branches were developed for this new plugin: 7.x-2x and 
+6.x-2.x respectively. The naming of the module "fb_likebox" in the code will remain
+since this is the name of the project at Drupal.org itself.
 
 -- REQUIREMENTS --
 
@@ -25,32 +31,7 @@ users with 'administer blocks' permission.
 * Add the Facebook Page (i.e.: http://www.facebook.com/wikisaber.es) and
   configure the display and appearance settings.
 
- - Configuration examples:
-
- -- A) Faces and stream (default)
- --- Show Stream: Yes
- --- Show Faces: Yes
- --- Height: 556
-
- -- B) Without Faces
- --- Show Stream: Yes
- --- Show Faces: No
- --- Height: 292
-
- -- C) Without Stream and Faces
- --- Show Stream: No
- --- Show Faces: No
- --- Scrollling: Disabled
- --- Height: 63
-
- -- D) Only Faces
- --- Show Header: No
- --- Show Stream: No
- --- Show Faces: Yes
- --- Scrollling: Disabled
- --- Height: 330
-
-
 -- CONTACT --
 
-david.rozas@gmail.com
+David Rozas: david.rozas@gmail.com
+Edward Baekelandt: edward_baekelandt@hotmail.com

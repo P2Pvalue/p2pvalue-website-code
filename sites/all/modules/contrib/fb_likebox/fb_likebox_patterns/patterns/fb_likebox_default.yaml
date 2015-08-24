@@ -1,0 +1,50 @@
+# YAML Module Provided Block Pattern
+# QScience
+
+info:
+  title: FB Likebox (default configuration)
+  description: Places a FB Likebox with the default configuration in the first sidebar of the bartik theme.
+  author: QScience
+  category: Facebook Likebox
+  version: 2.0
+  core: 7.x
+  author_email: drozas@surrey.ac.uk
+  author_website: http://qlectives.eu/
+
+actions:
+  - modify:
+      tag: block
+      module: fb_likebox
+      delta: 0
+      status: 1
+      weight: -6
+      theme: bartik
+      region: sidebar_first
+      title: FB Likebox (Default configuration)
+
+# Facebook Likebox specific settings
+  - 
+    modify:
+      tag: variables
+      0:
+        name: fb_likebox_url
+        value: >
+          https://www.facebook.com/FacebookDevelopers
+      1:
+        name: fb_likebox_hide_header
+        value: "0"
+      2:
+        name: fb_likebox_stream
+        value: "0"
+      3:
+        name: fb_likebox_show_faces
+        value: "1"
+      4:
+        name: fb_likebox_title
+        value: Like us on Facebook
+      5:
+        name: fb_likebox_width
+        value: "340"
+      6:
+        name: fb_likebox_height
+        value: "500"

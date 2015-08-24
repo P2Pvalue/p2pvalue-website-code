@@ -1,3 +1,6 @@
+FB Likebox: May 20, 2015
+Issue #2463529: Updated to the new FB Page plugin because FB Like Box will be deprecated at June 23 2015
+
 FB Likebox: August 17, 2014
 Issue #2311281: Adding option to add iFrame title attribute
 

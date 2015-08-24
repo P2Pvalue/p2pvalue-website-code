@@ -35,15 +35,13 @@ function fb_likebox_patterns_export_all_settings($args = NULL, &$result = NULL) 
   //Prepare a modify action with all the fb_likebox variables
   $variables_action = array('tag' => 'variables');
   $variables_action[] = array('name' => 'fb_likebox_url', 'value' => variable_get('fb_likebox_url', 'https://www.facebook.com/FacebookDevelopers'));
-  $variables_action[] = array('name' => 'fb_likebox_colorscheme', 'value' => variable_get('fb_likebox_colorscheme', 'light'));
-  $variables_action[] = array('name' => 'fb_likebox_header', 'value' => variable_get('fb_likebox_header', 'true'));
-  $variables_action[] = array('name' => 'fb_likebox_stream', 'value' => variable_get('fb_likebox_stream', 'true'));
-  $variables_action[] = array('name' => 'fb_likebox_show_faces', 'value' => variable_get('fb_likebox_show_faces', 'true'));
-  $variables_action[] = array('name' => 'fb_likebox_scrolling', 'value' => variable_get('fb_likebox_scrolling', 'no'));
-  $variables_action[] = array('name' => 'fb_likebox_width', 'value' => variable_get('fb_likebox_width', '292'));
-  $variables_action[] = array('name' => 'fb_likebox_height', 'value' => variable_get('fb_likebox_height', '556'));
-  $variables_action[] = array('name' => 'fb_likebox_show_border', 'value' => variable_get('fb_likebox_show_border', 'true'));
-  $variables_action[] = array('name' => 'fb_likebox_force_wall', 'value' => variable_get('fb_likebox_force_wall', 'false'));
+  $variables_action[] = array('name' => 'fb_likebox_hide_header', 'value' => variable_get('fb_likebox_hide_header', '0'));
+  $variables_action[] = array('name' => 'fb_likebox_stream', 'value' => variable_get('fb_likebox_header', '0'));
+  $variables_action[] = array('name' => 'fb_likebox_show_faces', 'value' => variable_get('fb_likebox_show_faces', '1'));
+  $variables_action[] = array('name' => 'fb_likebox_title', 'value' => variable_get('fb_likebox_title', 'Like us on Facebook'));
+  $variables_action[] = array('name' => 'fb_likebox_width', 'value' => variable_get('fb_likebox_width', '340'));
+  $variables_action[] = array('name' => 'fb_likebox_height', 'value' => variable_get('fb_likebox_height', '500'));
+
   $result[] = array(PATTERNS_MODIFY => $variables_action);
   return $result;
 }
