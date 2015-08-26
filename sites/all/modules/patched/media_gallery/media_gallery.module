@@ -694,9 +694,9 @@ function media_gallery_library() {
   $libraries['colorbox'] = array(
     'title' => 'Colorbox',
     'website' => 'http://colorpowered.com/colorbox/',
-    'version' => '1.3.9',
+    'version' => '1.4.37',
     'js' => array(
-      $colorbox_path . '/colorbox/jquery.colorbox-min.js' => array(),
+      $colorbox_path . '/jquery.colorbox-min.js' => array(),
     ),
     'css' => array(
       $colorbox_path . '/' . $stylesheet . '/colorbox.css' => array(
