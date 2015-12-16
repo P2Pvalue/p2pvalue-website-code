@@ -73,7 +73,7 @@ body {
 }
 iframe{ max-width: 100%;}
 #main-content p{ font-size: 1.4em; color: #3e3d3d; line-height: 1.6em;}
-#main-content ul li{font-size: 1.4em; color: #3e3d3d; line-height: 1.6em;}
+#main-content ul li{font-size: 1.4em;}
 #main-content ul li span ,#main-content ul li a,#main-content ul li p,#main-content ul li strong,#main-content ul li label{ font-size: 1em;}
 #main-content ul li li{ font-size: 1em;}
 /* =============================================================================
